@@ -15,6 +15,7 @@
 - 🌍 Installer 统一使用 UTC，具备国际化基础
 - 🛠 仅依赖 Docker / Docker Compose，无额外运行时
 
+--
 
 ## 快速开始（Quick Start）
 
