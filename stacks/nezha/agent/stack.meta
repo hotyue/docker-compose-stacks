@@ -1,0 +1,6 @@
+# Stack metadata for installer
+
+NAME="哪吒监控（Agent）"
+CATEGORY="monitoring"
+DESCRIPTION="哪吒监控客户端，用于被监控节点"
+DEFAULT_ENABLE=false

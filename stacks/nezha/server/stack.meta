@@ -1,0 +1,7 @@
+# Stack metadata for installer
+
+NAME="哪吒监控（Server）"
+CATEGORY="monitoring"
+DESCRIPTION="哪吒监控面板与 API 服务端"
+REQUIRES_NETWORK="proxy"
+DEFAULT_ENABLE=false

@@ -1,0 +1,10 @@
+version: "3.9"
+
+services:
+  nezha-agent:
+    image: ghcr.io/naiba/nezha-agent:latest
+    container_name: nezha-agent
+    restart: unless-stopped
+    environment:
+      - SERVER=${NEZHA_SERVER}
+      - CLIENT_SECRET=${NEZHA_CLIENT_SECRET}
