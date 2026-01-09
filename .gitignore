@@ -1,0 +1,24 @@
+# env
+.env
+**/.env
+
+# common data dirs
+**/data/
+**/db/
+**/database/
+**/letsencrypt/
+**/logs/
+**/cache/
+
+# secrets & keys
+**/*.key
+**/*.pem
+**/*.p12
+**/*.pfx
+**/secrets/
+**/*secret*
+
+# OS/editor
+.DS_Store
+.vscode/
+.idea/
