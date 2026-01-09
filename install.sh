@@ -43,11 +43,15 @@ runtime_dir_for_stack() {
 
 prepare_runtime_dir() {
   local dir="$1"
+
   if [ ! -d "$dir" ]; then
     echo "[$(timestamp)] 创建运行目录：$dir"
     mkdir -p "$dir"
   fi
-  # 确保运行目录对容器可写（不假设 UID/GID）
+
+  # 权限规则受冻结规范约束：
+  # docs/INSTALLER_RUNTIME.md
+  # Installer 仅保证运行目录对容器可写，不假设 UID/GID，禁止 chown
   chmod 775 "$dir"
 }
 

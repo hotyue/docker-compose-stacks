@@ -48,7 +48,26 @@
 
 ---
 
-## 三、新增 Stack 的基本要求（重要）
+## 三、Installer 权限修改前置约束（必读）
+
+在修改任何 **Installer（包括但不限于 `install.sh`、`bootstrap.sh`）中与运行时目录或权限相关的逻辑之前，必须先阅读并理解以下规范文档：
+
+📄 **《Installer 运行时目录与权限规范》**  
+路径：`docs/INSTALLER_RUNTIME.md`
+
+### 强制性约束
+
+- 任何违反该规范的修改，**将不被接受**
+- 特别是以下行为，属于明确禁止项：
+  - 基于固定 UID / GID 的 `chown`
+  - 假设容器内部运行用户
+  - 通过临时权限修补“解决”运行期问题
+
+如需调整 Installer 的权限策略，必须先提出**规范层面的修订讨论**，而非直接提交代码修改。
+
+---
+
+## 四、新增 Stack 的基本要求（重要）
 
 每个新增 Stack **必须满足以下条件**：
 
@@ -105,7 +124,7 @@ REQUIRES_NETWORK="proxy"
 
 ---
 
-## 四、Pull Request 规范
+## 五、Pull Request 规范
 
 一个 PR 只做一件事
 
@@ -125,7 +144,7 @@ REQUIRES_NETWORK="proxy"
 
 ---
 
-## 五、Issue 使用说明
+## 六、Issue 使用说明
 
  1️⃣ Bug 请提供：
 
@@ -143,7 +162,7 @@ REQUIRES_NETWORK="proxy"
 
 ---
 
-## 六、代码风格与语言
+## 七、代码风格与语言
 
 - 文档默认使用 中文
 
