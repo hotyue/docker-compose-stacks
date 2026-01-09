@@ -101,13 +101,13 @@ REQUIRES_NETWORK="proxy"
 
 一个 PR 只做一件事
 
-###- 提交前请自测：
+ 1️⃣ 提交前请自测：
 
 - docker compose up -d
 
 - ./install.sh
 
-###- PR 描述中说明：
+ 2️⃣ PR 描述中说明：
 
 - 变更内容
 
@@ -119,7 +119,7 @@ REQUIRES_NETWORK="proxy"
 
 ## 五、Issue 使用说明
 
-###- Bug 请提供：
+ 1️⃣ Bug 请提供：
 
 - 运行环境
 
@@ -127,7 +127,7 @@ REQUIRES_NETWORK="proxy"
 
 - 完整错误输出
 
-###- 新功能建议请说明：
+ 2️⃣ 新功能建议请说明：
 
 - 使用场景
 
