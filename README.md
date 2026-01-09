@@ -15,7 +15,6 @@
 - 🌍 Installer 统一使用 UTC，具备国际化基础
 - 🛠 仅依赖 Docker / Docker Compose，无额外运行时
 
---
 
 ## 快速开始（Quick Start）
 
@@ -33,41 +32,41 @@ cd docker-compose-stacks
 ```  
 Installer 将会：
 
-自动扫描所有可用应用栈
+- 自动扫描所有可用应用栈
 
-显示应用名称 / 分类 / 描述 / 依赖
+- 显示应用名称 / 分类 / 描述 / 依赖
 
-在安装前给出确认摘要
+- 在安装前给出确认摘要
 
-自动创建所需的 Docker network（如 proxy）
+- 自动创建所需的 Docker network（如 proxy）
 
-自动生成 .env（如存在 .env.example）
+- 自动生成 .env（如存在 .env.example）
 
 
 ## 当前可用应用栈（Stacks）  
 
 ### 反向代理（Reverse Proxy）  
-Nginx Proxy Manager
+#### Nginx Proxy Manager
 
-Web UI 管理 Nginx 反向代理与 HTTPS
+- Web UI 管理 Nginx 反向代理与 HTTPS
 
-作为统一反代入口
+- 作为统一反代入口
 
-使用共享 proxy 网络
+- 使用共享 proxy 网络
 
 ### 监控（Monitoring）
 
-哪吒监控（Server）
+#### 哪吒监控（Server）
 
-面板与 API 服务端
+- 面板与 API 服务端
 
-不直接暴露端口，通过反代访问
+- 不直接暴露端口，通过反代访问
 
-哪吒监控（Agent）
+#### 哪吒监控（Agent）
 
-部署在被监控节点
+- 部署在被监控节点
 
-独立安装，不依赖 proxy 网络
+- 独立安装，不依赖 proxy 网络
 
 每个应用栈目录内均包含独立的 README.md，用于说明用途、配置与注意事项。
 
@@ -78,32 +77,32 @@ Web UI 管理 Nginx 反向代理与 HTTPS
 
 ### Installer 负责调度
 
-扫描 stack.meta
+- 扫描 stack.meta
 
-创建共享资源（如 Docker network）
+- 创建共享资源（如 Docker network）
 
-启动并记录已安装应用
+- 启动并记录已安装应用
 
 ### Stack 自身必须自洽
 
-不假设安装顺序
+- 不假设安装顺序
 
-不修改 Compose 内容
+- 不修改 Compose 内容
 
-可被独立运行或由 Installer 调度
+- 可被独立运行或由 Installer 调度
 
 
 ## stack.meta
 
 每个可安装应用栈都包含一个 stack.meta 文件，用于描述：
 
-展示名称
+- 展示名称
 
-分类
+- 分类
 
-简要说明
+- 简要说明
 
-依赖的共享资源（如 proxy）
+- 依赖的共享资源（如 proxy）
 
 Installer 通过该文件实现 零硬编码发现与调度。
 
@@ -127,26 +126,26 @@ text
 
 ## 时区说明（Timezone）
 
-Installer 脚本统一使用 UTC
+### - Installer 脚本统一使用 UTC
 
-用于日志与状态记录
+- 用于日志与状态记录
 
-各应用栈运行时的时区：
+### - 各应用栈运行时的时区：
 
-由各自的 .env 控制
+- 由各自的 .env 控制
 
-默认给出合理示例值
+- 默认给出合理示例值
 
-用户可自行修改
+- 用户可自行修改
 
 
 ## 适用人群
 
-自托管 / VPS 用户
+- 自托管 / VPS 用户
 
-希望统一管理多个服务的个人或小团队
+- 希望统一管理多个服务的个人或小团队
 
-不想维护复杂 Ansible / K8s，但又需要结构化部署方案的用户
+- 不想维护复杂 Ansible / K8s，但又需要结构化部署方案的用户
 
 
 ## 免责声明（Disclaimer）
@@ -155,21 +154,21 @@ Installer 脚本统一使用 UTC
 
 请在生产环境中自行评估并配置：
 
-防火墙
+- 防火墙
 
-访问控制
+- 访问控制
 
-备份与监控
+- 备份与监控
 
-HTTPS / WAF / 身份验证策略
+- HTTPS / WAF / 身份验证策略
 
 
 ## 后续计划（Roadmap）
 
-Installer 多选安装 / 卸载
+- Installer 多选安装 / 卸载
 
-非交互式（CI / 自动化）模式
+- 非交互式（CI / 自动化）模式
 
-更多常见自托管应用栈
+- 更多常见自托管应用栈
 
 欢迎 Issue 与 PR。
