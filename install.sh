@@ -48,7 +48,7 @@ prepare_runtime_dir() {
     mkdir -p "$dir"
   fi
   # 确保运行目录对容器可写（不假设 UID/GID）
-  chmod 755 "$dir"
+  chmod 775 "$dir"
 }
 
 ensure_network() {
