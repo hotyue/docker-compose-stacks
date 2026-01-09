@@ -47,6 +47,8 @@ prepare_runtime_dir() {
     echo "[$(timestamp)] 创建运行目录：$dir"
     mkdir -p "$dir"
   fi
+  # 确保运行目录对容器可写（不假设 UID/GID）
+  chmod 755 "$dir"
 }
 
 ensure_network() {
