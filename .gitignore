@@ -22,3 +22,6 @@
 .DS_Store
 .vscode/
 .idea/
+
+# installer runtime state
+.installed
