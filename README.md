@@ -47,7 +47,7 @@ Installer 将会：
 
 ## 当前可用应用栈（Stacks）  
 
-### 反向代理（Reverse Proxy）  
+### 1️⃣ 反向代理（Reverse Proxy）  
 #### Nginx Proxy Manager
 
 - Web UI 管理 Nginx 反向代理与 HTTPS
@@ -56,7 +56,7 @@ Installer 将会：
 
 - 使用共享 proxy 网络
 
-### 监控（Monitoring）
+### 2️⃣ 监控（Monitoring）
 
 #### 哪吒监控（Server）
 
