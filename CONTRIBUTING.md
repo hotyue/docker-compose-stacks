@@ -61,7 +61,9 @@ stacks/<stack-name>/
 └── stack.meta
 ```
 
-如存在多角色（server / agent），可使用子目录拆分。
+如存在多角色（server / agent），可使用子目录拆分。  
+Stack 目录名必须为稳定应用 ID，不得包含版本号（如 `postgres` 而非 `postgres15`）。  
+版本变更应通过 Docker image tag 或 `.env` 控制，**不得通过目录名区分版本**。  
 
 ---
 
