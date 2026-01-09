@@ -58,12 +58,12 @@ DEFAULT_ENABLE=true
 ```
 
 ### 字段说明
-字段	说明
-NAME	菜单中展示的名称
-CATEGORY	分类（仅用于展示与分组）
-DESCRIPTION	一句话说明
-REQUIRES_NETWORK	依赖的共享网络
-DEFAULT_ENABLE	是否推荐默认安装
+字段	说明  
+NAME	菜单中展示的名称  
+CATEGORY	分类（仅用于展示与分组）  
+DESCRIPTION	一句话说明  
+REQUIRES_NETWORK	依赖的共享网络  
+DEFAULT_ENABLE	是否推荐默认安装  
 
 ---
 
