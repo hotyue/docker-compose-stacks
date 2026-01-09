@@ -141,9 +141,9 @@ Stack 不得依赖 Installer 进行所有权修复。
 
 - 安全边界依赖：
 
--- 目录路径隔离
+    - 目录路径隔离
 
--- Docker 容器隔离
+    - Docker 容器隔离
 
 - 而非宿主机 Unix 用户模型
 
@@ -161,11 +161,11 @@ Stack 不得依赖 Installer 进行所有权修复。
 
 - 证明不违反以下原则：
 
--- Installer-first
+    - Installer-first
 
--- Stack 自治
+    - Stack 自治
 
--- 长期向后兼容
+    - 长期向后兼容
 
 ## 九、规范性总结（一句话）
 
