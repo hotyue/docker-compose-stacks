@@ -8,6 +8,13 @@ export TZ=UTC
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 INSTALLED_FILE="$REPO_ROOT/.installed"
 
+# =========================
+# Runtime Capability Layer
+# =========================
+# shellcheck disable=SC1090
+source "$REPO_ROOT/scripts/lib/runtime.sh"
+detect_compose
+
 timestamp() {
   date -u +"%Y-%m-%dT%H:%M:%SZ"
 }
@@ -61,17 +68,15 @@ install_stack() {
     exit 0
   fi
 
-  # env 处理
   if [ -f "$dir/.env.example" ] && [ ! -f "$dir/.env" ]; then
     cp "$dir/.env.example" "$dir/.env"
     echo "[$(timestamp)] 已生成 .env（来自 .env.example）"
   fi
 
-  # 网络处理
   ensure_network "${REQUIRES_NETWORK:-}"
 
   echo "[$(timestamp)] 启动服务中..."
-  (cd "$dir" && docker compose up -d)
+  (cd "$dir" && $COMPOSE_CMD up -d)
 
   mark_installed "$dir"
   echo "[$(timestamp)] 安装完成：$NAME"
@@ -81,32 +86,43 @@ main() {
   need_cmd docker
   need_cmd find
 
+  declare -a METAS=()
   mapfile -t METAS < <(find "$REPO_ROOT/stacks" -type f -name stack.meta 2>/dev/null | sort)
   if [ "${#METAS[@]}" -eq 0 ]; then
     echo "[$(timestamp)] 未找到任何 stack.meta"
     exit 1
   fi
 
-  declare -a DIRS LINES
+  # 注意：不要使用 LINES 作为变量名（Bash 特殊变量）
+  declare -a MENU_DIRS=()
+  declare -a MENU_LINES=()
+
+  local dir NAME CATEGORY DESCRIPTION REQUIRES_NETWORK
+
   for meta in "${METAS[@]}"; do
-    local dir NAME CATEGORY DESCRIPTION REQUIRES_NETWORK
     dir="$(dirname "$meta")"
     NAME=""; CATEGORY=""; DESCRIPTION=""; REQUIRES_NETWORK=""
+
     # shellcheck disable=SC1090
     source "$meta"
+
+    # 元数据合法性校验
+    [ -z "$NAME" ] && continue
+    [ -z "$CATEGORY" ] && continue
+    [ -z "$DESCRIPTION" ] && continue
 
     local extra=""
     [ -n "${REQUIRES_NETWORK:-}" ] && extra="needs:${REQUIRES_NETWORK}"
     is_installed "$dir" && extra="$extra 已安装"
 
-    DIRS+=("$dir")
-    LINES+=("[$CATEGORY] $NAME - $DESCRIPTION ${extra:+($extra)}")
+    MENU_DIRS+=("$dir")
+    MENU_LINES+=("[$CATEGORY] $NAME - $DESCRIPTION ${extra:+($extra)}")
   done
 
   echo
   echo "可安装应用栈："
-  for i in "${!LINES[@]}"; do
-    printf "%3d) %s\n" "$((i+1))" "${LINES[$i]}"
+  for i in "${!MENU_LINES[@]}"; do
+    printf "%3d) %s\n" "$((i+1))" "${MENU_LINES[$i]}"
   done
   echo "  0) 退出"
   echo
@@ -117,12 +133,12 @@ main() {
     exit 0
   fi
 
-  if ! [[ "$choice" =~ ^[0-9]+$ ]] || [ "$choice" -lt 1 ] || [ "$choice" -gt "${#DIRS[@]}" ]; then
+  if ! [[ "$choice" =~ ^[0-9]+$ ]] || [ "$choice" -lt 1 ] || [ "$choice" -gt "${#MENU_DIRS[@]}" ]; then
     echo "[$(timestamp)] 无效选择：$choice"
     exit 1
   fi
 
-  local target="${DIRS[$((choice-1))]}"
+  local target="${MENU_DIRS[$((choice-1))]}"
   if is_installed "$target"; then
     echo "[$(timestamp)] 该应用已安装，如需重装请先手动清理。"
     exit 0
