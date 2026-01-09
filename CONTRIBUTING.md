@@ -28,6 +28,12 @@
 - 结构清晰、无侵入式魔改
 - 能独立运行，也能被 Installer 调度
 
+新增或修改 Stack 后，请运行：
+
+```bash
+./scripts/gen-stacks-index.sh
+```
+
 ### ✅ 改进 Installer
 
 - 交互体验优化

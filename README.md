@@ -77,32 +77,23 @@ Installer 将会：
 
 ---
 
-## 当前可用应用栈（Stacks）  
+## 当前可用应用栈（Stacks）
 
-### 1️⃣ 反向代理（Reverse Proxy）  
-#### Nginx Proxy Manager
+<!-- STACKS:START -->
 
-- Web UI 管理 Nginx 反向代理与 HTTPS
+### 反向代理
 
-- 作为统一反代入口
+- **Nginx Proxy Manager**  
+  Web UI 管理 Nginx 反向代理与 HTTPS 证书
 
-- 使用共享 proxy 网络
+### 监控
 
-### 2️⃣ 监控（Monitoring）
+- **哪吒监控（Agent）**  
+  哪吒监控客户端，用于被监控节点
+- **哪吒监控（Server）**  
+  哪吒监控面板与 API 服务端
 
-#### 哪吒监控（Server）
-
-- 面板与 API 服务端
-
-- 不直接暴露端口，通过反代访问
-
-#### 哪吒监控（Agent）
-
-- 部署在被监控节点
-
-- 独立安装，不依赖 proxy 网络
-
-每个应用栈目录内均包含独立的 README.md，用于说明用途、配置与注意事项。
+<!-- STACKS:END -->
 
 ---
 
