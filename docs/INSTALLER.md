@@ -140,7 +140,7 @@ Installer 使用仓库根目录下的文件：
 Installer 在运行时目录创建与权限处理方面，**必须严格遵循以下冻结规范**：
 
 📄 **《Installer 运行时目录与权限规范》**  
-路径：[`docs/INSTALLER_RUNTIME.md`](docs/INSTALLER_RUNTIME.md)
+路径：[`./INSTALLER_RUNTIME.md`](./INSTALLER_RUNTIME.md)
 
 该规范明确约束了：
 
