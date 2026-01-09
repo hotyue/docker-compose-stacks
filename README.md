@@ -109,8 +109,7 @@ Installer 通过该文件实现 零硬编码发现与调度。
 
 ## 目录结构
 
-text
-复制代码
+```text
 .
 ├── install.sh              # 交互式 Installer
 ├── stacks/                 # 应用栈集合
@@ -122,7 +121,7 @@ text
 ├── docs/                   # 设计与规范文档
 ├── .installed              # 已安装记录（Installer 使用）
 └── README.md
-
+```
 
 ## 时区说明（Timezone）
 
