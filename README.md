@@ -25,29 +25,55 @@
 
 ## 快速开始（Quick Start）
 
-### 1️⃣ 克隆仓库
+本仓库提供两种使用方式：
+
+- **快速安装（推荐）**：适合普通用户（无需 git）
+- **克隆仓库运行**：适合开发者或贡献者
+
+### 方式 A：快速安装（推荐）
+
+> 说明：该命令会下载并运行 Installer。  
+> 建议先查看脚本内容再执行（下方提供查看方式）。
+
+直接运行：
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/hotyue/docker-compose-stacks/main/scripts/bootstrap.sh | bash
+```
+安装指定版本（可复现）：
+
+```bash
+DCS_REF=v0.1.0 curl -fsSL https://raw.githubusercontent.com/hotyue/docker-compose-stacks/main/scripts/bootstrap.sh | bash
+```
+先下载再查看（更安全）：
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/hotyue/docker-compose-stacks/main/scripts/bootstrap.sh -o bootstrap.sh
+less bootstrap.sh
+bash bootstrap.sh
+```
+
+### 方式 B：克隆仓库运行（开发者/贡献者）
 
 ```bash
 git clone https://github.com/hotyue/docker-compose-stacks.git
 cd docker-compose-stacks
-```
-### 2️⃣ 运行 Installer 
-
-复制代码
-```bash
 ./install.sh
-```  
+```
+
 Installer 将会：
 
-- 自动扫描所有可用应用栈
+- 自动扫描所有可用应用栈（基于 stack.meta）
 
-- 显示应用名称 / 分类 / 描述 / 依赖
+- 显示应用名称 / 分类 / 描述 / 依赖（如 proxy）
 
 - 在安装前给出确认摘要
 
 - 自动创建所需的 Docker network（如 proxy）
 
 - 自动生成 .env（如存在 .env.example）
+
+- 记录已安装状态，避免重复安装
 
 ---
 
