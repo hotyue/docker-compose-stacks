@@ -42,7 +42,6 @@ Installer 将会：
 
 自动生成 .env（如存在 .env.example）
 
----
 
 ## 当前可用应用栈（Stacks）  
 
@@ -71,7 +70,6 @@ Web UI 管理 Nginx 反向代理与 HTTPS
 
 每个应用栈目录内均包含独立的 README.md，用于说明用途、配置与注意事项。
 
----
 
 ## Installer 设计说明（重要）
 
@@ -93,7 +91,6 @@ Web UI 管理 Nginx 反向代理与 HTTPS
 
 可被独立运行或由 Installer 调度
 
----
 
 ## stack.meta
 
@@ -109,7 +106,6 @@ Web UI 管理 Nginx 反向代理与 HTTPS
 
 Installer 通过该文件实现 零硬编码发现与调度。
 
----
 
 ## 目录结构
 
@@ -127,7 +123,6 @@ text
 ├── .installed              # 已安装记录（Installer 使用）
 └── README.md
 
----
 
 ## 时区说明（Timezone）
 
@@ -143,7 +138,6 @@ Installer 脚本统一使用 UTC
 
 用户可自行修改
 
----
 
 ## 适用人群
 
@@ -153,7 +147,6 @@ Installer 脚本统一使用 UTC
 
 不想维护复杂 Ansible / K8s，但又需要结构化部署方案的用户
 
----
 
 ## 免责声明（Disclaimer）
 
@@ -169,7 +162,6 @@ Installer 脚本统一使用 UTC
 
 HTTPS / WAF / 身份验证策略
 
----
 
 ## 后续计划（Roadmap）
 
