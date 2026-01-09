@@ -35,15 +35,17 @@
 > 说明：该命令会下载并运行 Installer。  
 > 建议先查看脚本内容再执行（下方提供查看方式）。
 
-直接运行：
+直接运行（交互式）：
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/hotyue/docker-compose-stacks/main/scripts/bootstrap.sh | bash
+curl -fsSL https://raw.githubusercontent.com/hotyue/docker-compose-stacks/main/scripts/bootstrap.sh -o bootstrap.sh
+bash bootstrap.sh
 ```
 安装指定版本（可复现）：
 
 ```bash
-DCS_REF=v0.1.0 curl -fsSL https://raw.githubusercontent.com/hotyue/docker-compose-stacks/main/scripts/bootstrap.sh | bash
+curl -fsSL https://raw.githubusercontent.com/hotyue/docker-compose-stacks/main/scripts/bootstrap.sh -o bootstrap.sh
+DCS_REF=v1.0.0 bash bootstrap.sh
 ```
 先下载再查看（更安全）：
 
