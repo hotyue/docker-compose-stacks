@@ -42,6 +42,8 @@ Installer 将会：
 
 自动生成 .env（如存在 .env.example）
 
+---
+
 ## 当前可用应用栈（Stacks）  
 ### 反向代理（Reverse Proxy）  
 Nginx Proxy Manager
@@ -67,6 +69,8 @@ Web UI 管理 Nginx 反向代理与 HTTPS
 
 每个应用栈目录内均包含独立的 README.md，用于说明用途、配置与注意事项。
 
+---
+
 ## Installer 设计说明（重要）
 
 本仓库的 Installer 设计遵循以下原则：
@@ -87,6 +91,8 @@ Web UI 管理 Nginx 反向代理与 HTTPS
 
 可被独立运行或由 Installer 调度
 
+---
+
 ## stack.meta
 
 每个可安装应用栈都包含一个 stack.meta 文件，用于描述：
@@ -100,6 +106,8 @@ Web UI 管理 Nginx 反向代理与 HTTPS
 依赖的共享资源（如 proxy）
 
 Installer 通过该文件实现 零硬编码发现与调度。
+
+---
 
 ## 目录结构
 text
@@ -116,6 +124,8 @@ text
 ├── .installed              # 已安装记录（Installer 使用）
 └── README.md
 
+---
+
 ## 时区说明（Timezone）
 Installer 脚本统一使用 UTC
 
@@ -129,12 +139,16 @@ Installer 脚本统一使用 UTC
 
 用户可自行修改
 
+---
+
 ## 适用人群
 自托管 / VPS 用户
 
 希望统一管理多个服务的个人或小团队
 
 不想维护复杂 Ansible / K8s，但又需要结构化部署方案的用户
+
+---
 
 ## 免责声明（Disclaimer）
 本仓库提供的是部署示例与安装工具，而非完整安全方案。
@@ -148,6 +162,8 @@ Installer 脚本统一使用 UTC
 备份与监控
 
 HTTPS / WAF / 身份验证策略
+
+---
 
 ## 后续计划（Roadmap）
 Installer 多选安装 / 卸载
