@@ -10,7 +10,7 @@ services:
       - "8008:8008"
 
     volumes:
-      - /docker-compose-stacks/stacks/nezha/server/data:/dashboard/data
+      - ./data:/dashboard/data
 
     environment:
       - TZ=UTC

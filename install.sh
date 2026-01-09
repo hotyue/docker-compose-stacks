@@ -9,6 +9,11 @@ REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 INSTALLED_FILE="$REPO_ROOT/.installed"
 
 # =========================
+# Runtime Layout Settings
+# =========================
+RUNTIME_ROOT="/opt/docker"
+
+# =========================
 # Runtime Capability Layer
 # =========================
 # shellcheck disable=SC1090
@@ -24,6 +29,24 @@ need_cmd() {
     echo "[$(timestamp)] 缺少命令：$1"
     exit 1
   }
+}
+
+# =========================
+# Runtime Helpers
+# =========================
+runtime_dir_for_stack() {
+  local stack_dir="$1"
+  local rel
+  rel="${stack_dir#"$REPO_ROOT/stacks/"}"
+  echo "$RUNTIME_ROOT/$rel"
+}
+
+prepare_runtime_dir() {
+  local dir="$1"
+  if [ ! -d "$dir" ]; then
+    echo "[$(timestamp)] 创建运行目录：$dir"
+    mkdir -p "$dir"
+  fi
 }
 
 ensure_network() {
@@ -53,12 +76,16 @@ install_stack() {
   # shellcheck disable=SC1090
   source "$dir/stack.meta"
 
+  local runtime_dir
+  runtime_dir="$(runtime_dir_for_stack "$dir")"
+
   echo
   echo "即将安装："
   echo "  名称        ：$NAME"
   echo "  分类        ：$CATEGORY"
   echo "  描述        ：$DESCRIPTION"
-  echo "  目录        ：$dir"
+  echo "  定义目录    ：$dir"
+  echo "  运行目录    ：$runtime_dir"
   echo "  依赖网络    ：${REQUIRES_NETWORK:-无}"
   echo
 
@@ -68,15 +95,23 @@ install_stack() {
     exit 0
   fi
 
-  if [ -f "$dir/.env.example" ] && [ ! -f "$dir/.env" ]; then
-    cp "$dir/.env.example" "$dir/.env"
-    echo "[$(timestamp)] 已生成 .env（来自 .env.example）"
+  # 准备运行目录
+  prepare_runtime_dir "$runtime_dir"
+
+  # env 处理（复制到运行目录）
+  if [ -f "$dir/.env.example" ] && [ ! -f "$runtime_dir/.env" ]; then
+    cp "$dir/.env.example" "$runtime_dir/.env"
+    echo "[$(timestamp)] 已生成运行目录 .env（来自 .env.example）"
   fi
 
   ensure_network "${REQUIRES_NETWORK:-}"
 
   echo "[$(timestamp)] 启动服务中..."
-  (cd "$dir" && $COMPOSE_CMD up -d)
+  (
+    cd "$runtime_dir"
+    ln -sf "$dir/docker-compose.yml" docker-compose.yml
+    $COMPOSE_CMD up -d
+  )
 
   mark_installed "$dir"
   echo "[$(timestamp)] 安装完成：$NAME"

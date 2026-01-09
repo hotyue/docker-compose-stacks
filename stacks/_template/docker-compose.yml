@@ -1,0 +1,3 @@
+volumes:
+  - ./data:/app/data
+# data 目录将位于 /opt/docker/<stack-id>/data

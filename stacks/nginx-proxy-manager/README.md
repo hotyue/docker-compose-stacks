@@ -1,6 +1,8 @@
 ## Reverse Proxy Network
 
-本 Stack 会创建一个名为 `proxy` 的 Docker bridge network。
+本 Stack 会创建一个名为 `proxy` 的 Docker bridge network。  
+首次启动前，若目录不存在将由 Docker 自动创建。
+
 
 后续所有需要通过 Nginx Proxy Manager 反代的服务：
 - 加入同一个 `proxy` network

@@ -6,6 +6,17 @@
 
 ---
 
+## 运行目录规范
+
+本 Stack 的运行时数据将位于：
+
+/opt/docker/<stack-id>/
+
+docker-compose.yml 中请仅使用相对路径挂载。
+
+
+---
+
 ## Quick Start
 
 ```bash
