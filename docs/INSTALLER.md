@@ -57,7 +57,8 @@ REQUIRES_NETWORK="proxy"
 DEFAULT_ENABLE=true
 ```
 
-#### 字段说明
+字段说明:
+
 | 字段               | 说明           |
 | ---------------- | ------------ |
 | NAME             | 菜单中展示的名称     |
