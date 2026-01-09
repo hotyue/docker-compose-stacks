@@ -15,6 +15,7 @@
 - 🌍 Installer 统一使用 UTC，具备国际化基础
 - 🛠 仅依赖 Docker / Docker Compose，无额外运行时
 
+---
 
 ## 快速开始（Quick Start）
 
@@ -42,6 +43,7 @@ Installer 将会：
 
 - 自动生成 .env（如存在 .env.example）
 
+---
 
 ## 当前可用应用栈（Stacks）  
 
@@ -70,6 +72,7 @@ Installer 将会：
 
 每个应用栈目录内均包含独立的 README.md，用于说明用途、配置与注意事项。
 
+---
 
 ## Installer 设计说明（重要）
 
@@ -91,6 +94,7 @@ Installer 将会：
 
 - 可被独立运行或由 Installer 调度
 
+---
 
 ## stack.meta
 
@@ -106,6 +110,7 @@ Installer 将会：
 
 Installer 通过该文件实现 零硬编码发现与调度。
 
+---
 
 ## 目录结构
 
@@ -123,6 +128,8 @@ Installer 通过该文件实现 零硬编码发现与调度。
 └── README.md
 ```
 
+---
+
 ## 时区说明（Timezone）
 
 ### - Installer 脚本统一使用 UTC
@@ -137,6 +144,7 @@ Installer 通过该文件实现 零硬编码发现与调度。
 
 - 用户可自行修改
 
+---
 
 ## 适用人群
 
@@ -146,6 +154,7 @@ Installer 通过该文件实现 零硬编码发现与调度。
 
 - 不想维护复杂 Ansible / K8s，但又需要结构化部署方案的用户
 
+---
 
 ## 免责声明（Disclaimer）
 
@@ -161,6 +170,7 @@ Installer 通过该文件实现 零硬编码发现与调度。
 
 - HTTPS / WAF / 身份验证策略
 
+---
 
 ## 后续计划（Roadmap）
 
