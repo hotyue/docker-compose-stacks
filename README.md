@@ -15,7 +15,6 @@
 - 🌍 Installer 统一使用 UTC，具备国际化基础
 - 🛠 仅依赖 Docker / Docker Compose，无额外运行时
 
----
 
 ## 快速开始（Quick Start）
 
@@ -26,6 +25,7 @@ git clone https://github.com/hotyue/docker-compose-stacks.git
 cd docker-compose-stacks
 ```
 ### 2️⃣ 运行 Installer 
+
 复制代码
 ```bash
 ./install.sh
