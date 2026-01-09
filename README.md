@@ -1,5 +1,11 @@
 # Docker Compose Stacks
 
+![License](https://img.shields.io/github/license/hotyue/docker-compose-stacks)
+![Last Commit](https://img.shields.io/github/last-commit/hotyue/docker-compose-stacks)
+![Repo Size](https://img.shields.io/github/repo-size/hotyue/docker-compose-stacks)
+![Shell](https://img.shields.io/badge/installer-bash-blue)
+![Docker](https://img.shields.io/badge/docker-compose-blue)
+
 一个 **基于 Installer 的 Docker Compose 应用仓库**，用于快速部署常见的自托管服务。
 
 本仓库的目标不是堆模板，而是提供一个 **可扩展、可维护、可一键安装** 的基础设施级方案。
