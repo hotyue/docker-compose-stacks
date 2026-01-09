@@ -1,0 +1,7 @@
+# Stack metadata for installer
+
+NAME="Nginx Proxy Manager"
+CATEGORY="reverse-proxy"
+DESCRIPTION="Web UI 管理 Nginx 反向代理与 HTTPS 证书"
+REQUIRES_NETWORK="proxy"
+DEFAULT_ENABLE=true
