@@ -78,7 +78,7 @@ Installer 将会：
 
 本仓库的 Installer 设计遵循以下原则：
 
-### Installer 负责调度
+### 1️⃣ Installer 负责调度
 
 - 扫描 stack.meta
 
@@ -86,7 +86,7 @@ Installer 将会：
 
 - 启动并记录已安装应用
 
-### Stack 自身必须自洽
+### 2️⃣ Stack 自身必须自洽
 
 - 不假设安装顺序
 
@@ -96,7 +96,7 @@ Installer 将会：
 
 ---
 
-## stack.meta
+### 3️⃣ stack.meta
 
 每个可安装应用栈都包含一个 stack.meta 文件，用于描述：
 
