@@ -1,0 +1,7 @@
+# Stack metadata for installer
+
+NAME="Matomo"
+CATEGORY="monitoring"
+DESCRIPTION="开源的自托管 Web 分析平台，用于替代 Google Analytics"
+REQUIRES_NETWORK="proxy"
+DEFAULT_ENABLE=false

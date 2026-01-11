@@ -96,6 +96,8 @@ Installer 将会：
 
 ### 监控
 
+- **Matomo**  
+  开源的自托管 Web 分析平台，用于替代 Google Analytics
 - **哪吒监控（Agent）**  
   哪吒监控客户端，用于被监控节点
 - **哪吒监控（Server）**  
@@ -152,15 +154,17 @@ Installer 通过该文件实现 零硬编码发现与调度。
 
 ```text
 .
-├── install.sh              # 交互式 Installer
-├── stacks/                 # 应用栈集合
-│   ├── nginx-proxy-manager/
-│   ├── nezha/
+├── install.sh                # 交互式 Installer
+├── stacks/                   # 应用栈集合
+│   ├── nginx-proxy-manager/  # NPM反代面板
+│   ├── nezha/                # nezha VPS监控面板
 │   │   ├── server/
 │   │   └── agent/
+│   ├── matomo/               # WEB访问统计面板
+│   ├── mariadb/              # 数据库
 │   └── _template/
-├── docs/                   # 设计与规范文档
-├── .installed              # 已安装记录（Installer 使用）
+├── docs/                     # 设计与规范文档
+├── .installed                # 已安装记录（Installer 使用）
 └── README.md
 ```
 
