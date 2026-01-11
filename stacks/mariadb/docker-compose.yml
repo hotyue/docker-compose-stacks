@@ -1,0 +1,29 @@
+services:
+  init-perms:
+    image: busybox:1.36
+    command: sh -c 'mkdir -p /data && chmod 775 /data'
+    volumes:
+      - ./data:/data
+    networks:
+      - proxy
+    restart: "no"
+
+  mariadb:
+    image: mariadb:11
+    container_name: mariadb
+    depends_on:
+      init-perms:
+        condition: service_completed_successfully
+    env_file:
+      - .env
+    ports:
+      - "${MARIADB_PORT:-3306}:3306"
+    volumes:
+      - ./data:/var/lib/mysql
+    networks:
+      - proxy
+    restart: unless-stopped
+
+networks:
+  proxy:
+    external: true
