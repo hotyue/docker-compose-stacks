@@ -104,11 +104,63 @@ install_stack() {
   # 准备运行目录
   prepare_runtime_dir "$runtime_dir"
 
-  # env 处理（复制到运行目录）
+  #############################################
+  # v1.0.3 - unified .env handling (BEGIN)
+  #############################################
+
+  ENV_CREATED=false
+
   if [ -f "$dir/.env.example" ] && [ ! -f "$runtime_dir/.env" ]; then
     cp "$dir/.env.example" "$runtime_dir/.env"
+    ENV_CREATED=true
     echo "[$(timestamp)] 已生成运行目录 .env（来自 .env.example）"
   fi
+
+  # validate required keys from .env.example
+  if [ -f "$dir/.env.example" ] && [ -f "$runtime_dir/.env" ]; then
+    required_keys=$(
+      grep -Ev '^\s*#|^\s*$' "$dir/.env.example" |
+      grep '=' |
+      grep -v '=$' |
+      cut -d= -f1
+    )
+
+    for key in $required_keys; do
+      if ! grep -q "^$key=" "$runtime_dir/.env"; then
+        echo "[$(timestamp)] ERROR: 缺少必填配置项 '$key'（.env）"
+        exit 1
+      fi
+
+      value=$(grep "^$key=" "$runtime_dir/.env" | cut -d= -f2-)
+      if [ -z "$value" ]; then
+        echo "[$(timestamp)] ERROR: 必填配置项 '$key' 为空（.env）"
+        exit 1
+      fi
+    done
+  fi
+
+  # notify user and hard-stop on first .env creation
+  if [ "$ENV_CREATED" = true ]; then
+    echo "--------------------------------------------------"
+    echo "已生成配置文件："
+    echo "  $runtime_dir/.env"
+    echo
+    echo "在继续安装前，你需要手动修改该文件中的配置项。"
+    echo
+    echo "可使用以下命令进行编辑："
+    echo "  vi $runtime_dir/.env"
+    echo "  # 或"
+    echo "  nano $runtime_dir/.env"
+    echo
+    echo "修改完成后，请重新运行 install.sh 以继续安装。"
+    echo "--------------------------------------------------"
+    echo "[$(timestamp)] 首次生成 .env，安装已暂停。"
+    exit 0
+  fi
+
+  #############################################
+  # v1.0.3 - unified .env handling (END)
+  #############################################
 
   ensure_network "${REQUIRES_NETWORK:-}"
 
