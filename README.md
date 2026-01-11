@@ -98,6 +98,11 @@ Installer 将会：
 - **哪吒监控（Server）**  
   哪吒监控面板与 API 服务端
 
+### 数据库
+
+- **MariaDB**  
+  MariaDB 单机数据库服务（容器化），用于通用业务数据存储
+
 <!-- STACKS:END -->
 
 ---
