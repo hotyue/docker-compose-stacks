@@ -7,13 +7,16 @@ services:
     restart: always
 
     ports:
-      - "8008:8008"
+      - "8008:8008"  # 不可以不映射，agent需要访问它~
 
     volumes:
       - ./data:/dashboard/data
 
     environment:
       - TZ=UTC
+
+    networks:
+      - proxy   # ← 关键在这里
 
 
 networks:
