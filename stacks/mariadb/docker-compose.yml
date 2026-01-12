@@ -18,6 +18,8 @@ services:
       - .env
     ports:
       - "${MARIADB_PORT:-3306}:3306"
+    command:
+      --max_allowed_packet=256M    #mariadb默认16MB，matomo建议用64MB
     volumes:
       - ./data:/var/lib/mysql
     networks:
