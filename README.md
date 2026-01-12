@@ -232,3 +232,7 @@ Installer 通过该文件实现 零硬编码发现与调度。
 - 更多常见自托管应用栈
 
 欢迎 Issue 与 PR。
+
+## Stargazers over time
+
+[![Stargazers over time](https://starchart.cc/hotyue/docker-compose-stacks.svg)](https://starchart.cc/hotyue/docker-compose-stacks)
