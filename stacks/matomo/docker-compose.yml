@@ -9,10 +9,16 @@ services:
     container_name: matomo-init-perms
     command: >
       sh -c "
-      mkdir -p /data &&
-      chown -R 33:33 /data &&
-      find /data -type d -exec chmod 755 {} \; &&
-      find /data -type f -exec chmod 644 {} \;
+      set -e;
+      echo '[init] preparing data dir';
+      mkdir -p /data || true;
+      echo '[init] trying chown';
+      chown -R 33:33 /data || echo '[warn] chown failed';
+      echo '[init] fixing permissions';
+      find /data -type d -exec chmod 755 {} \; || true;
+      find /data -type f -exec chmod 644 {} \; || true;
+      echo '[init] done';
+      exit 0
       "
     volumes:
       - ./data:/data
