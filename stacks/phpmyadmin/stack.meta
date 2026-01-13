@@ -1,17 +1,7 @@
-# =========================
-# Stack Metadata Definition
-# =========================
+# Stack metadata for installer
 
-# 人类可读名称（必填）
 NAME="phpMyAdmin"
-
-# Stack 分类（必填）
-# 归类为通用工具类，避免引入新的分类语义
 CATEGORY="tools"
-
-# 简要描述（必填）
 DESCRIPTION="基于 Web 的 MariaDB / MySQL 数据库管理工具"
-
-# 依赖网络（可选）
-# 仅在平台已定义统一数据库访问网络时启用
-# REQUIRES_NETWORK="backend"
+REQUIRES_NETWORK="proxy"
+DEFAULT_ENABLE=false
