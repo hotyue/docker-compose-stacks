@@ -52,13 +52,13 @@ MARIADB_PASSWORD=change_me_strong_app_password
 ```
 你之前安装 mariadb 时如何配置的上述内容；  
 这里你就要对应的修改；  
-
+```text
 MATOMO_DB_HOST=mariadb
 MATOMO_DB_NAME=**app**
 MATOMO_DB_USER=**app**
 MATOMO_DB_PASSWORD=**change_me_strong_app_password**
 MATOMO_DB_PREFIX=matomo_
-
+```
 
 ## 后台归档（Archiving）说明
 
