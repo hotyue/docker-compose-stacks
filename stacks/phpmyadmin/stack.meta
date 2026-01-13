@@ -1,7 +1,7 @@
 # Stack metadata for installer
 
 NAME="phpMyAdmin"
-CATEGORY="tools"
+CATEGORY="utility"
 DESCRIPTION="基于 Web 的 MariaDB / MySQL 数据库管理工具"
 REQUIRES_NETWORK="proxy"
 DEFAULT_ENABLE=false

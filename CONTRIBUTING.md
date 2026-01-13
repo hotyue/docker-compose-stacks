@@ -75,6 +75,7 @@
 
 ```text
 stacks/<stack-name>/
+├── .env.example
 ├── docker-compose.yml
 ├── README.md
 └── stack.meta

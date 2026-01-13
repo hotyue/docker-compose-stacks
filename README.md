@@ -108,6 +108,11 @@ Installer 将会：
 - **MariaDB**  
   MariaDB 单机数据库服务（容器化），用于通用业务数据存储
 
+### 工具
+
+- **phpMyAdmin**  
+  基于 Web 的 MariaDB / MySQL 数据库管理工具
+
 <!-- STACKS:END -->
 
 ---
