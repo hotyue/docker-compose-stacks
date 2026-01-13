@@ -1,17 +1,30 @@
+version: "3.8"
+
 services:
   npm:
     image: jc21/nginx-proxy-manager:latest
     container_name: nginx-proxy-manager
     restart: unless-stopped
+
     ports:
       - "80:80"
       - "81:81"
       - "443:443"
+
     environment:
       TZ: ${TZ:-Asia/Shanghai}
+
+      # Database configuration (external MariaDB / MySQL)
+      DB_MYSQL_HOST: ${NPM_DB_HOST}
+      DB_MYSQL_PORT: ${NPM_DB_PORT}
+      DB_MYSQL_USER: ${NPM_DB_USER}
+      DB_MYSQL_PASSWORD: ${NPM_DB_PASSWORD}
+      DB_MYSQL_NAME: ${NPM_DB_NAME}
+
     volumes:
       - ./data:/data
       - ./letsencrypt:/etc/letsencrypt
+
     networks:
       - proxy
 
