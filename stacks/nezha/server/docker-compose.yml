@@ -7,17 +7,29 @@ services:
     restart: always
 
     ports:
-      - "8008:8008"  # 不可以不映射，agent需要访问它~
+      - "8008:8008"  # 不可以不映射，agent 需要访问
 
     volumes:
       - ./data:/dashboard/data
 
     environment:
+      # 时区
       - TZ=UTC
 
-    networks:
-      - proxy   # ← 关键在这里
+      # ===============================
+      # 数据库配置（外置 MariaDB / MySQL）
+      # ===============================
+      - DB_TYPE=${NEZHA_DB_TYPE}
+      - DB_HOST=${NEZHA_DB_HOST}
+      - DB_PORT=${NEZHA_DB_PORT}
+      - DB_NAME=${NEZHA_DB_NAME}
+      - DB_USER=${NEZHA_DB_USER}
+      - DB_PASSWORD=${NEZHA_DB_PASSWORD}
+      - DB_CHARSET=${NEZHA_DB_CHARSET}
+      - DB_TIMEZONE=${NEZHA_DB_TIMEZONE}
 
+    networks:
+      - proxy
 
 networks:
   proxy:
