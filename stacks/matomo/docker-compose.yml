@@ -1,10 +1,33 @@
 services:
   # =========================
+  # 初始化宿主 data 目录权限（兜底）
+  # =========================
+  matomo-init-perms:
+    image: busybox:1.36
+    container_name: matomo-init-perms
+    command: >
+      sh -c "
+      echo '[init] fixing host data permissions';
+      mkdir -p /data/tmp /data/config;
+      chown -R 33:33 /data;
+      chmod -R 755 /data;
+      echo '[init] done';
+      "
+    volumes:
+      - ./data:/data
+    restart: "no"
+    networks:
+      - proxy
+
+  # =========================
   # Matomo 主服务
   # =========================
   matomo:
     image: ${MATOMO_IMAGE}
     container_name: ${MATOMO_CONTAINER_NAME}
+    depends_on:
+      matomo-init-perms:
+        condition: service_completed_successfully
     restart: unless-stopped
     ports:
       - "${MATOMO_HTTP_PORT}:80"
@@ -19,22 +42,22 @@ services:
       # ===== 运行时配置 =====
       TZ: ${TZ}
 
-      # 禁用浏览器触发归档（官方支持）
+      # 禁用浏览器触发归档
       MATOMO_CONFIG_General__browser_archiving_disabled_enforce: "1"
     volumes:
-      # ⚠️ 环境兼容方案：直接覆盖 Matomo 工作目录
       - ./data:/var/www/html
     networks:
       - proxy
 
   # =========================
-  # 后台归档任务（Archive Worker）
+  # 后台归档任务
   # =========================
   matomo-archive:
     image: ${MATOMO_IMAGE}
     container_name: matomo-archive
     depends_on:
-      - matomo
+      matomo:
+        condition: service_started
     restart: unless-stopped
     entrypoint: >
       sh -c "
@@ -46,14 +69,10 @@ services:
     environment:
       TZ: ${TZ}
     volumes:
-      # 与主服务共享同一数据目录
       - ./data:/var/www/html
     networks:
       - proxy
 
-# =========================
-# 外部网络
-# =========================
 networks:
   proxy:
     external: true
