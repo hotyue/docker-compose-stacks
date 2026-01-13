@@ -1,0 +1,17 @@
+version: "3.8"
+
+services:
+  phpmyadmin:
+    image: phpmyadmin:5
+    container_name: phpmyadmin
+    env_file:
+      - .env
+    ports:
+      - "8018:80"
+    networks:
+      - proxy
+    restart: unless-stopped
+
+networks:
+  proxy:
+    external: true
