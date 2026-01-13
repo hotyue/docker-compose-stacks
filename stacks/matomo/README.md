@@ -40,6 +40,26 @@ Matomo 是一款开源的 Web 分析平台，用于替代 Google Analytics，支
 
 - 重新执行安装后，服务启动
 
+
+### ========== 数据库配置 ==========
+Matomo 使用的 MySQL / MariaDB 数据库  
+下边这一段来自 mariadb/.env.example
+```text
+# 可选：初始化库与用户（如果不需要可留空或删除这三行）
+MARIADB_DATABASE=app
+MARIADB_USER=app
+MARIADB_PASSWORD=change_me_strong_app_password
+```
+你之前安装 mariadb 时如何配置的上述内容；  
+这里你就要对应的修改；  
+
+MATOMO_DB_HOST=mariadb
+MATOMO_DB_NAME=**app**
+MATOMO_DB_USER=**app**
+MATOMO_DB_PASSWORD=**change_me_strong_app_password**
+MATOMO_DB_PREFIX=matomo_
+
+
 ## 后台归档（Archiving）说明
 
 本 Stack **默认启用后台定时归档** ，用于提升报表加载性能并避免浏览器按需归档带来的性能问题。
