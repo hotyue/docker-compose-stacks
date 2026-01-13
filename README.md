@@ -167,6 +167,7 @@ Installer 通过该文件实现 零硬编码发现与调度。
 │   │   └── agent/
 │   ├── matomo/               # WEB访问统计面板
 │   ├── mariadb/              # 数据库
+│   ├── phpMyAdmin/              # 数据库管理工具
 │   └── _template/
 ├── docs/                     # 设计与规范文档
 ├── .installed                # 已安装记录（Installer 使用）
