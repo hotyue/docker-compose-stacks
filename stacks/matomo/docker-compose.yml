@@ -22,7 +22,8 @@ services:
       # 禁用浏览器触发归档（官方支持）
       MATOMO_CONFIG_General__browser_archiving_disabled_enforce: "1"
     volumes:
-      - matomo-data:/var/www/html
+      # ⚠️ 环境兼容方案：直接覆盖 Matomo 工作目录
+      - ./data:/var/www/html
     networks:
       - proxy
 
@@ -45,15 +46,10 @@ services:
     environment:
       TZ: ${TZ}
     volumes:
-      - matomo-data:/var/www/html
+      # 与主服务共享同一数据目录
+      - ./data:/var/www/html
     networks:
       - proxy
-
-# =========================
-# Docker Named Volume
-# =========================
-volumes:
-  matomo-data:
 
 # =========================
 # 外部网络
