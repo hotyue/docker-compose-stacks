@@ -54,9 +54,9 @@ MARIADB_PASSWORD=change_me_strong_app_password
 这里你就要对应的修改；  
 ```text
 MATOMO_DB_HOST=mariadb
-MATOMO_DB_NAME=**app**
-MATOMO_DB_USER=**app**
-MATOMO_DB_PASSWORD=**change_me_strong_app_password**
+MATOMO_DB_NAME=app
+MATOMO_DB_USER=app
+MATOMO_DB_PASSWORD=change_me_strong_app_password
 MATOMO_DB_PREFIX=matomo_
 ```
 
