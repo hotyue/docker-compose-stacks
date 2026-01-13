@@ -10,8 +10,9 @@ services:
     command: >
       sh -c "
       mkdir -p /data &&
-      chmod -R 775 /data &&
-      chmod g+s /data
+      chown -R 33:33 /data &&
+      find /data -type d -exec chmod 755 {} \; &&
+      find /data -type f -exec chmod 644 {} \;
       "
     volumes:
       - ./data:/data
