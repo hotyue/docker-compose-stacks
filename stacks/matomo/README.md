@@ -2,92 +2,213 @@
 
 Matomo 是一款开源的 Web 分析平台，用于替代 Google Analytics，支持完全自托管与数据自主控制。
 
+本 Stack 提供 Matomo On-Premise 的 Docker Compose 部署方案，用于网站访问统计与用户行为分析。
+
 ## Stack 说明
 
-本 Stack 提供 **Matomo On-Premise 的 Docker Compose 部署方案** ，用于网站访问与用户行为分析。
+本 Matomo Stack 具有以下明确边界与特性：
 
-该 Stack：
+- 使用 官方 Matomo Docker 镜像
 
-- 使用官方 Matomo 镜像
+- 通过 Docker Compose 运行 Matomo 应用
 
 - 不包含数据库服务
 
-- 不修改项目 Installer 的任何行为
+- 不管理数据库生命周期
 
-- 不引入自定义安装或配置脚本
+- 不修改项目 Installer 的任何既有行为
+
+- 不引入自定义安装脚本或运行时校验逻辑
+
+本 Stack 仅负责 Matomo 应用及其归档任务的容器化运行。
+
+## 架构与服务组成
+
+本 Stack 由以下两个服务组成：
+
+### matomo（主服务）
+
+- 提供 Matomo Web 界面
+
+- 对外暴露 HTTP 服务端口
+
+- 通过环境变量注入数据库连接信息
+
+- 显式禁用浏览器触发归档
+
+### matomo-archive（后台归档服务）
+
+- 使用与主服务相同的 Matomo 镜像
+
+- 通过定时循环执行官方归档命令
+
+- 默认每 1 小时执行一次归档
+
+- 与主服务共享数据目录
+
+两个服务均接入 外部 proxy 网络，用于统一反向代理接入。
+
+## 一应用一逻辑数据库（强制语义）
+
+Matomo 必须使用一个独立的逻辑数据库，并遵循以下约定：
+
+- 逻辑数据库名称 必须为 matomo
+
+- 该数据库 仅供 Matomo Stack 使用
+
+- 不与任何其他应用共享逻辑数据库
+
+该约定用于确保数据隔离、配置清晰性与平台级可维护性。
+
+## 数据库实例职责说明
+
+- MySQL / MariaDB 属于平台级资源
+
+- 数据库实例：
+
+    - 不由本 Stack 创建
+
+    - 不由本 Stack 管理
+
+    - 不由本 Stack 校验或迁移
+
+- 本 Stack 仅通过环境变量连接并使用数据库
 
 ## 依赖说明
 
-- 本 Stack **不包含数据库** 
+在启动 Matomo Stack 前，需满足以下前置条件：
 
-- 需提前准备可用的 **MySQL / MariaDB** 实例
+- 已存在可用的 MySQL / MariaDB 实例
 
-- 数据库连接信息由 .env 提供
+- 数据库实例中已预先完成：
 
-- 需接入已存在的 proxy 外部网络
+    - 创建逻辑数据库 matomo
+
+    - 创建对应的数据库用户并授权
+
+- 已存在可用的 proxy 外部网络
+
+    - 本 Stack 将直接加入该网络
+
+    - 网络本身不由本 Stack 创建或管理
 
 ## 配置说明
+### 配置入口声明
 
-所有配置均通过 .env 文件提供，.env.example 为唯一配置声明入口。
+- 所有配置均通过 .env 文件提供
 
-首次安装流程遵循项目既有冻结行为：
+- .env.example 是 唯一配置声明入口
 
-- Installer 从 .env.example 生成 .env
+- docker-compose.yml 中不包含硬编码配置值
 
-- Installer **强制中断安装流程** 
+### Installer 行为说明（继承冻结事实）
 
-- 用户自行补全并确认 .env 内容
+首次安装流程遵循项目中已冻结的 Installer 行为：
 
-- 重新执行安装后，服务启动
+    1. Installer 从 .env.example 生成 .env
 
+    2. Installer 强制中断安装流程
 
-### ========== 数据库配置 ==========
-Matomo 使用的 MySQL / MariaDB 数据库  
-下边这一段来自 mariadb/.env.example
+    3. 用户自行补全并确认 .env 内容
+
+    4. 重新执行安装后，服务启动
+
+本 Stack 未引入任何 Installer 特判或流程分支。
+
+## 数据库配置说明
+### 平台级数据库准备（仅示意）
+
+以下内容仅用于说明 数据库应如何在平台侧准备，不代表本 Stack 会执行相关操作：
 ```text
-# 可选：初始化库与用户（如果不需要可留空或删除这三行）
-MARIADB_DATABASE=app
-MARIADB_USER=app
-MARIADB_PASSWORD=change_me_strong_app_password
+MARIADB_DATABASE=matomo
+MARIADB_USER=matomo
+MARIADB_PASSWORD=change_me_strong_matomo_password
 ```
-你之前安装 mariadb 时如何配置的上述内容；  
-这里你就要对应的修改；  
+### Matomo Stack 数据库连接配置
+
+在 .env 中应配置如下变量：
 ```text
 MATOMO_DB_HOST=mariadb
-MATOMO_DB_NAME=app
-MATOMO_DB_USER=app
-MATOMO_DB_PASSWORD=change_me_strong_app_password
+MATOMO_DB_PORT=3306
+MATOMO_DB_NAME=matomo
+MATOMO_DB_USER=matomo
+MATOMO_DB_PASSWORD=change_me_strong_matomo_password
 MATOMO_DB_PREFIX=matomo_
 ```
+### 与 docker-compose 的对应关系
+
+上述变量将被映射为 Matomo 官方支持的环境变量：
+```text
+MATOMO_DATABASE_HOST
+MATOMO_DATABASE_DBNAME
+MATOMO_DATABASE_USERNAME
+MATOMO_DATABASE_PASSWORD
+MATOMO_DATABASE_TABLES_PREFIX
+```
+
+本 Stack 不对数据库状态进行任何运行时校验。
 
 ## 后台归档（Archiving）说明
 
-本 Stack **默认启用后台定时归档** ，用于提升报表加载性能并避免浏览器按需归档带来的性能问题。
+本 Stack 默认启用后台定时归档，用于提升报表加载性能，并避免浏览器按需归档带来的性能问题。
 
-实现方式：
+### 实现方式（与 compose 文件一致）
 
-- 通过独立的后台归档服务定期执行 Matomo 官方归档命令
+通过独立的 matomo-archive 服务
 
-- 归档周期为 **每小时一次**
+周期性执行官方命令：
+```text
+php /var/www/html/console core:archive --url=${MATOMO_BASE_URL}
+```
 
-同时，本 Stack 已 **强制禁用浏览器触发归档行为** ，以避免高访问量场景下的性能问题。
+默认执行周期：每 3600 秒（1 小时）
 
-如需恢复浏览器触发归档，可在 docker-compose.yml 中移除对应的配置项。
+### 浏览器归档行为
+
+主服务中已通过环境变量：
+```text
+MATOMO_CONFIG_General__browser_archiving_disabled_enforce=1
+```
+
+强制禁用浏览器触发归档
+
+该行为为官方支持的配置注入方式
+
+### 数据目录说明
+
+./data 目录被挂载至：
+```text
+/var/www/html
+```
+
+主服务与归档服务共享该目录
+
+该目录用于：
+
+Matomo 程序文件
+
+用户上传内容
+
+归档数据与配置
 
 ## 注意事项
 
-- Matomo Stack 本身不管理数据库生命周期
+Matomo Stack 不管理数据库生命周期
 
-- 请确保数据库实例在 Matomo 启动前可用
+请确保数据库实例在 Matomo 启动前已可用
 
-- 后台归档任务依赖正确配置的 MATOMO_BASE_URL
+后台归档任务依赖正确配置的 MATOMO_BASE_URL
+
+本 Stack 不对反向代理、证书或域名配置做任何假设
 
 ## 兼容性与行为声明
 
-- 本 Stack 完全继承项目中已冻结的 Installer 行为
+本 Stack 完全继承项目中已冻结的 Installer 行为
 
-- 未引入任何 Installer 特判或安装流程分支
+未引入任何新功能或运行时校验
 
-- 所有运行时行为均通过 Docker Compose 显式声明
+未修改数据库部署模型
 
-以上内容即为 **v1.0.4 版本中 Matomo Stack 的完整说明。** 
+与 v1.0.x 版本保持向后兼容
+
+### 本文档为 Matomo Stack 在 v1.1.0 版本中的语义升级说明文本。
