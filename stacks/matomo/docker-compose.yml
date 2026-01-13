@@ -1,9 +1,33 @@
 version: "3.8"
 
 services:
+  # =========================
+  # 数据目录权限初始化（平台级，高容错）
+  # =========================
+  matomo-init-perms:
+    image: busybox:1.36
+    container_name: matomo-init-perms
+    command: >
+      sh -c "
+      mkdir -p /data &&
+      chmod -R 775 /data &&
+      chmod g+s /data
+      "
+    volumes:
+      - ./data:/data
+    restart: "no"
+    networks:
+      - proxy
+
+  # =========================
+  # Matomo 主服务
+  # =========================
   matomo:
     image: ${MATOMO_IMAGE}
     container_name: ${MATOMO_CONTAINER_NAME}
+    depends_on:
+      matomo-init-perms:
+        condition: service_completed_successfully
     restart: unless-stopped
     ports:
       - "${MATOMO_HTTP_PORT}:80"
@@ -25,13 +49,16 @@ services:
     networks:
       - proxy
 
+  # =========================
   # 后台归档任务（archive worker）
+  # =========================
   matomo-archive:
     image: ${MATOMO_IMAGE}
     container_name: matomo-archive
-    restart: unless-stopped
     depends_on:
-      - matomo
+      matomo:
+        condition: service_started
+    restart: unless-stopped
     entrypoint: >
       sh -c "
       while true; do
