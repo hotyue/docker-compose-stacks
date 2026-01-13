@@ -1,69 +1,39 @@
-version: "3.8"
-
 services:
-  # =========================
-  # 数据目录权限初始化（BusyBox 安全写法）
-  # =========================
-  matomo-init-perms:
-    image: busybox:1.36
-    container_name: matomo-init-perms
-    command: >
-      sh -c "
-      echo '[init] prepare data dir';
-      mkdir -p /data;
-
-      echo '[init] try chown';
-      chown -R 33:33 /data 2>/dev/null || true;
-
-      echo '[init] fix dir perms';
-      find /data -type d -exec chmod 755 {} \; 2>/dev/null || true;
-
-      echo '[init] fix file perms';
-      find /data -type f -exec chmod 644 {} \; 2>/dev/null || true;
-
-      echo '[init] done';
-      exit 0
-      "
-    volumes:
-      - ./data:/data
-    restart: "no"
-    networks:
-      - proxy
-
   # =========================
   # Matomo 主服务
   # =========================
   matomo:
     image: ${MATOMO_IMAGE}
     container_name: ${MATOMO_CONTAINER_NAME}
-    depends_on:
-      matomo-init-perms:
-        condition: service_completed_successfully
     restart: unless-stopped
     ports:
       - "${MATOMO_HTTP_PORT}:80"
     environment:
+      # ===== 数据库配置 =====
       MATOMO_DATABASE_HOST: ${MATOMO_DB_HOST}
       MATOMO_DATABASE_DBNAME: ${MATOMO_DB_NAME}
       MATOMO_DATABASE_USERNAME: ${MATOMO_DB_USER}
       MATOMO_DATABASE_PASSWORD: ${MATOMO_DB_PASSWORD}
       MATOMO_DATABASE_TABLES_PREFIX: ${MATOMO_DB_PREFIX}
+
+      # ===== 运行时配置 =====
       TZ: ${TZ}
+
+      # 禁用浏览器触发归档（官方支持）
       MATOMO_CONFIG_General__browser_archiving_disabled_enforce: "1"
     volumes:
-      - ./data:/var/www/html
+      - matomo-data:/var/www/html
     networks:
       - proxy
 
   # =========================
-  # 后台归档任务
+  # 后台归档任务（Archive Worker）
   # =========================
   matomo-archive:
     image: ${MATOMO_IMAGE}
     container_name: matomo-archive
     depends_on:
-      matomo:
-        condition: service_started
+      - matomo
     restart: unless-stopped
     entrypoint: >
       sh -c "
@@ -75,10 +45,19 @@ services:
     environment:
       TZ: ${TZ}
     volumes:
-      - ./data:/var/www/html
+      - matomo-data:/var/www/html
     networks:
       - proxy
 
+# =========================
+# Docker Named Volume
+# =========================
+volumes:
+  matomo-data:
+
+# =========================
+# 外部网络
+# =========================
 networks:
   proxy:
     external: true
