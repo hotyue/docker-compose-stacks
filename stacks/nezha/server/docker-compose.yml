@@ -53,8 +53,8 @@ services:
     ports:
       - "8008:8008"  # agent 必须可访问
 
-#    volumes:
-#      - ./data:/dashboard/data
+    volumes:
+      - ./data:/dashboard/data
 
     environment:
       # 时区
