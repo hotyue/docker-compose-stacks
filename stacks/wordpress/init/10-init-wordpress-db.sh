@@ -1,14 +1,13 @@
 #!/usr/bin/env sh
 set -eu
 
-# v1.1.10 WordPress 逻辑数据库初始化
-# 兼容 MariaDB 10 / 11
+# v1.1.10 WordPress 逻辑数据库初始化（对齐 db_admin 权限集）
 # 幂等，可重复执行
 #
 # 仅负责：
 # - 创建 WordPress 专属数据库
 # - 创建 WordPress 专属用户
-# - 授权该用户访问其数据库（ALL PRIVILEGES，最小作用域）
+# - 授权该用户访问其数据库（不包含 LOCK TABLES / ALL PRIVILEGES）
 
 mariadb \
   -h "${WP_DB_HOST}" \
@@ -23,10 +22,11 @@ CREATE DATABASE IF NOT EXISTS \`${WP_DB_NAME}\`
 CREATE USER IF NOT EXISTS '${WP_DB_USER}'@'%'
   IDENTIFIED BY '${WP_DB_PASSWORD}';
 
--- MariaDB 11 要求使用 ALL PRIVILEGES
-GRANT ALL PRIVILEGES
-  ON \`${WP_DB_NAME}\`.*
-  TO '${WP_DB_USER}'@'%';
+GRANT
+  SELECT, INSERT, UPDATE, DELETE,
+  CREATE, DROP, INDEX, ALTER,
+  CREATE TEMPORARY TABLES
+ON \`${WP_DB_NAME}\`.* TO '${WP_DB_USER}'@'%';
 
 FLUSH PRIVILEGES;
 SQL
