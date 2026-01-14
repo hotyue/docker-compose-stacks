@@ -50,7 +50,7 @@ bash bootstrap.sh
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/hotyue/docker-compose-stacks/main/scripts/bootstrap.sh -o bootstrap.sh
-DCS_REF=v1.0.0 bash bootstrap.sh
+DCS_REF=v1.1.6 bash bootstrap.sh
 
 ```
 先下载再查看（更安全）：
@@ -80,6 +80,8 @@ Installer 将会：
 - 自动创建所需的 Docker network（如 proxy）
 
 - 自动生成 .env（如存在 .env.example）
+
+- 在安装阶段复制并准备初始化资源（如数据库初始化脚本）
 
 - 记录已安装状态，避免重复安装
 

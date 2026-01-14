@@ -2,6 +2,6 @@
 
 NAME="MariaDB"
 CATEGORY="database"
-DESCRIPTION="MariaDB 单机数据库服务（容器化），用于通用业务数据存储"
+DESCRIPTION="MariaDB 单机数据库服务（容器化），内置初始化治理与平台级账号模型，适用于通用业务数据存储."
 REQUIRES_NETWORK="proxy"
 DEFAULT_ENABLE=false
