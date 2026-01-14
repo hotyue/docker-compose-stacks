@@ -22,7 +22,7 @@ services:
       --max_allowed_packet=256M    #mariadb默认16MB，matomo建议用64MB
     volumes:
       - ./data:/var/lib/mysql
-      - ./init-platform-accounts.sql:/docker-entrypoint-initdb.d/10-platform-accounts.sql:ro
+      - ./docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d:ro
     networks:
       - proxy
     restart: unless-stopped
