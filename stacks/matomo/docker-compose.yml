@@ -1,10 +1,45 @@
 version: "3.8"
 
 services:
+  # ==============================
+  # Matomo 数据库初始化（一次性）
+  # ==============================
+  matomo-db-init:
+    image: mariadb:11
+    container_name: matomo-db-init
+    restart: "no"
+    command: ["bash", "/init/10-init-matomo-db.sh"]
+    environment:
+      TZ: ${TZ}
+
+      # MariaDB 连接信息
+      MATOMO_DB_HOST: ${MATOMO_DB_HOST}
+      MATOMO_DB_PORT: ${MATOMO_DB_PORT}
+
+      # Matomo 逻辑数据库
+      MATOMO_DB_NAME: ${MATOMO_DB_NAME}
+      MATOMO_DB_USER: ${MATOMO_DB_USER}
+      MATOMO_DB_PASSWORD: ${MATOMO_DB_PASSWORD}
+
+      # 初始化阶段专用管理账号
+      MATOMO_DB_ADMIN_USER: ${MATOMO_DB_ADMIN_USER}
+      MATOMO_DB_ADMIN_PASSWORD: ${MATOMO_DB_ADMIN_PASSWORD}
+
+    volumes:
+      - ./init:/init:ro
+    networks:
+      - proxy
+
+
+  # ==============================
+  # Matomo 主服务
+  # ==============================
   matomo:
     image: ${MATOMO_IMAGE}
     container_name: ${MATOMO_CONTAINER_NAME}
     restart: unless-stopped
+    depends_on:
+      - matomo-db-init
     ports:
       - "${MATOMO_HTTP_PORT}:80"
     environment:
@@ -18,14 +53,18 @@ services:
       # ===== 运行时配置 =====
       TZ: ${TZ}
 
-      # 禁用浏览器触发归档（官方支持的配置注入方式）
+      # 禁用浏览器触发归档（官方支持方式）
       MATOMO_CONFIG_General__browser_archiving_disabled_enforce: "1"
+
     volumes:
       - ./data:/var/www/html
     networks:
       - proxy
 
-  # 后台归档任务（archive worker）
+
+  # ==============================
+  # Matomo 后台归档任务
+  # ==============================
   matomo-archive:
     image: ${MATOMO_IMAGE}
     container_name: matomo-archive
@@ -45,6 +84,7 @@ services:
       - ./data:/var/www/html
     networks:
       - proxy
+
 
 networks:
   proxy:
