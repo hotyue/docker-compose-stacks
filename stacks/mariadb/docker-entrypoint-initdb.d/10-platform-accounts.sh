@@ -3,8 +3,11 @@ set -e
 
 # v1.1.6 平台级账号初始化
 # 仅在 MariaDB 首次初始化阶段执行
+# 适配 MariaDB 11（使用 mariadb 客户端）
 
-mysql -uroot -p"${MARIADB_ROOT_PASSWORD}" <<'SQL'
+mariadb -uroot -p"${MARIADB_ROOT_PASSWORD}" <<SQL
+
+-- 平台级管理员账号（DBA / 运维使用）
 CREATE USER IF NOT EXISTS '${DB_ADMIN_USER}'@'%' IDENTIFIED BY '${DB_ADMIN_PASSWORD}';
 GRANT
   SELECT, INSERT, UPDATE, DELETE,
@@ -15,6 +18,7 @@ GRANT
   EVENT, TRIGGER
 ON *.* TO '${DB_ADMIN_USER}'@'%' WITH GRANT OPTION;
 
+-- 只读审计账号（查询 / 审计使用）
 CREATE USER IF NOT EXISTS '${DB_READONLY_USER}'@'%' IDENTIFIED BY '${DB_READONLY_PASSWORD}';
 GRANT
   SELECT, SHOW VIEW
