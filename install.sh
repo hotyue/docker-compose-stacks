@@ -7,6 +7,7 @@ set -euo pipefail
 export TZ=UTC
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 INSTALLED_FILE="$REPO_ROOT/.installed"
+PENDING_FILE="$REPO_ROOT/.installing"
 
 # =========================
 # Runtime Layout Settings
@@ -49,9 +50,6 @@ prepare_runtime_dir() {
     mkdir -p "$dir"
   fi
 
-  # 权限规则受冻结规范约束：
-  # docs/INSTALLER_RUNTIME.md
-  # Installer 仅保证运行目录对容器可写，不假设 UID/GID，禁止 chown
   chmod 775 "$dir"
 }
 
@@ -83,16 +81,6 @@ sync_stack_assets() {
   local src_dir="$1"
   local runtime_dir="$2"
 
-  # 仅在首次安装时进行“完整资产投放”
-  # 目标：保证 Stack 私有脚本目录（如 init/）等资产必然落地
-  #
-  # 注意：
-  # - 不复制 stack.meta（运行目录无需该文件）
-  # - 不复制 .env.example（由统一 .env handling 接管）
-  # - 不复制 .git* 等无关项
-  # - 不覆盖运行目录已存在的 .env（防止用户配置丢失）
-  #
-  # 采用 rsync（若不存在则回退到 cp -a 的保守实现）
   if command -v rsync >/dev/null 2>&1; then
     rsync -a \
       --exclude 'stack.meta' \
@@ -105,8 +93,6 @@ sync_stack_assets() {
       --exclude '.env' \
       "$src_dir/" "$runtime_dir/"
   else
-    # 无 rsync 时：用 cp -a 逐项复制（排除项手工处理）
-    # 该实现不追求“增量同步”，只保证首次安装资产落地
     local item
     shopt -s dotglob nullglob
     for item in "$src_dir"/* "$src_dir"/.*; do
@@ -115,7 +101,6 @@ sync_stack_assets() {
           continue
           ;;
       esac
-      # 只在目标不存在时复制，避免覆盖用户可能修改过的运行时文件
       if [ ! -e "$runtime_dir/$(basename "$item")" ]; then
         cp -a "$item" "$runtime_dir/" 2>/dev/null || true
       fi
@@ -149,27 +134,10 @@ install_stack() {
     exit 0
   fi
 
-  # 准备运行目录
   prepare_runtime_dir "$runtime_dir"
-
-  # 网络确保（若声明）
   ensure_network "${REQUIRES_NETWORK:-}"
 
-  #############################################
-  # v1.1.7 - stack asset sync (BEGIN)
-  #############################################
-  # 首次安装时，将 Stack 目录的私有资产完整投放到运行目录，
-  # 以保证 init/ 等子目录不会丢失。
-  #
-  # 注意：不会覆盖运行目录既有 .env
   sync_stack_assets "$dir" "$runtime_dir"
-  #############################################
-  # v1.1.7 - stack asset sync (END)
-  #############################################
-
-  #############################################
-  # v1.0.3 - unified .env handling (BEGIN)
-  #############################################
 
   ENV_CREATED=false
 
@@ -179,7 +147,6 @@ install_stack() {
     echo "[$(timestamp)] 已生成运行目录 .env（来自 .env.example）"
   fi
 
-  # validate required keys from .env.example
   if [ -f "$dir/.env.example" ] && [ -f "$runtime_dir/.env" ]; then
     required_keys=$(
       grep -Ev '^\s*#|^\s*$' "$dir/.env.example" |
@@ -202,54 +169,55 @@ install_stack() {
     done
   fi
 
-  # notify user and hard-stop on first .env creation
+  # ===== 修复点：记录 pending 状态 =====
   if [ "$ENV_CREATED" = true ]; then
+    {
+      echo "STACK_DIR=$dir"
+      echo "RUNTIME_DIR=$runtime_dir"
+    } > "$PENDING_FILE"
+
     echo "--------------------------------------------------"
     echo "已生成配置文件："
     echo "  $runtime_dir/.env"
     echo
     echo "在继续安装前，你需要手动修改该文件中的配置项。"
     echo
-    echo "可使用以下命令进行编辑："
-    echo "  vi $runtime_dir/.env"
-    echo "  # 或"
-    echo "  nano $runtime_dir/.env"
-    echo
-    echo "修改完成后，请重新运行 install.sh 以继续安装。"
+    echo "修改完成后，重新运行 installer 将继续安装。"
     echo "--------------------------------------------------"
     echo "[$(timestamp)] 首次生成 .env，安装已暂停。"
     exit 0
   fi
 
-  #############################################
-  # v1.0.3 - unified .env handling (END)
-  #############################################
-
   echo "[$(timestamp)] 启动服务中..."
   (
     cd "$runtime_dir"
-
-    # v1.1.6：复制数据库初始化脚本（仅首次安装）
-    # docker-entrypoint-initdb.d 仅用于初始化阶段，是否执行由官方 entrypoint 判定
-    if [ -d "$dir/docker-entrypoint-initdb.d" ] && \
-       [ ! -d "$runtime_dir/docker-entrypoint-initdb.d" ]; then
-      mkdir -p "$runtime_dir/docker-entrypoint-initdb.d"
-      cp -a "$dir/docker-entrypoint-initdb.d/." \
-            "$runtime_dir/docker-entrypoint-initdb.d/" \
-            2>/dev/null || true
-    fi
-
     ln -sf "$dir/docker-compose.yml" docker-compose.yml
     $COMPOSE_CMD up -d
   )
 
   mark_installed "$dir"
+  rm -f "$PENDING_FILE"
   echo "[$(timestamp)] 安装完成：$NAME"
 }
 
 main() {
   need_cmd docker
   need_cmd find
+
+  # ===== 新增：pending 安装恢复 =====
+  if [ -f "$PENDING_FILE" ]; then
+    echo "[$(timestamp)] 检测到未完成的安装，正在恢复..."
+    # shellcheck disable=SC1090
+    source "$PENDING_FILE"
+
+    if [ -z "${STACK_DIR:-}" ]; then
+      echo "[$(timestamp)] ERROR: pending 状态损坏，请手动清理。"
+      exit 1
+    fi
+
+    install_stack "$STACK_DIR"
+    exit 0
+  fi
 
   declare -a METAS=()
   mapfile -t METAS < <(find "$REPO_ROOT/stacks" -type f -name stack.meta 2>/dev/null | sort)
@@ -258,7 +226,6 @@ main() {
     exit 1
   fi
 
-  # 注意：不要使用 LINES 作为变量名（Bash 特殊变量）
   declare -a MENU_DIRS=()
   declare -a MENU_LINES=()
 
@@ -271,7 +238,6 @@ main() {
     # shellcheck disable=SC1090
     source "$meta"
 
-    # 元数据合法性校验
     [ -z "$NAME" ] && continue
     [ -z "$CATEGORY" ] && continue
     [ -z "$DESCRIPTION" ] && continue
