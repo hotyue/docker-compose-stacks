@@ -1,0 +1,67 @@
+version: "3.8"
+
+services:
+  # ==============================
+  # WordPress 数据库初始化（一次性）
+  # ==============================
+  wp-db-init:
+    image: mariadb:11
+    container_name: wordpress-db-init
+    restart: "no"
+    command: ["sh", "/init/10-init-wordpress-db.sh"]
+    environment:
+      TZ: ${TZ:-Asia/Shanghai}
+
+      # MariaDB 连接信息（平台级资源）
+      WP_DB_HOST: ${WP_DB_HOST}
+      WP_DB_PORT: ${WP_DB_PORT}
+
+      # WordPress 逻辑数据库
+      WP_DB_NAME: ${WP_DB_NAME}
+      WP_DB_USER: ${WP_DB_USER}
+      WP_DB_PASSWORD: ${WP_DB_PASSWORD}
+
+      # 初始化阶段专用管理账号
+      WP_DB_ADMIN_USER: ${WP_DB_ADMIN_USER}
+      WP_DB_ADMIN_PASSWORD: ${WP_DB_ADMIN_PASSWORD}
+
+    volumes:
+      - ./init:/init:ro
+    networks:
+      - proxy
+
+
+  # ==============================
+  # WordPress 主服务
+  # ==============================
+  wordpress:
+    image: wordpress:latest
+    container_name: wordpress
+    restart: unless-stopped
+
+    depends_on:
+      - wp-db-init
+
+    ports:
+      - "${WP_HTTP_PORT}:80"
+
+    environment:
+      TZ: ${TZ:-Asia/Shanghai}
+
+      # Database configuration (external MariaDB / MySQL)
+      WORDPRESS_DB_HOST: ${WP_DB_HOST}
+      WORDPRESS_DB_PORT: ${WP_DB_PORT}
+      WORDPRESS_DB_USER: ${WP_DB_USER}
+      WORDPRESS_DB_PASSWORD: ${WP_DB_PASSWORD}
+      WORDPRESS_DB_NAME: ${WP_DB_NAME}
+
+    volumes:
+      - ./data:/var/www/html
+
+    networks:
+      - proxy
+
+
+networks:
+  proxy:
+    external: true

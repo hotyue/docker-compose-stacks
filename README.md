@@ -114,6 +114,8 @@ Installer 将会：
 
 - **phpMyAdmin**  
   基于 Web 的 MariaDB / MySQL 数据库管理工具
+- **WordPress**  
+  WordPress 内容管理系统（外置数据库）
 
 <!-- STACKS:END -->
 

@@ -1,0 +1,7 @@
+# Stack metadata for installer
+
+NAME="WordPress"
+CATEGORY="utility"
+DESCRIPTION="WordPress 内容管理系统（外置数据库）"
+REQUIRES_NETWORK="proxy"
+DEFAULT_ENABLE=false
