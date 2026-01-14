@@ -76,6 +76,54 @@ mark_installed() {
   grep -Fxq "$dir" "$INSTALLED_FILE" || echo "$dir" >> "$INSTALLED_FILE"
 }
 
+# =========================
+# Stack Asset Sync (v1.1.7)
+# =========================
+sync_stack_assets() {
+  local src_dir="$1"
+  local runtime_dir="$2"
+
+  # 仅在首次安装时进行“完整资产投放”
+  # 目标：保证 Stack 私有脚本目录（如 init/）等资产必然落地
+  #
+  # 注意：
+  # - 不复制 stack.meta（运行目录无需该文件）
+  # - 不复制 .env.example（由统一 .env handling 接管）
+  # - 不复制 .git* 等无关项
+  # - 不覆盖运行目录已存在的 .env（防止用户配置丢失）
+  #
+  # 采用 rsync（若不存在则回退到 cp -a 的保守实现）
+  if command -v rsync >/dev/null 2>&1; then
+    rsync -a \
+      --exclude 'stack.meta' \
+      --exclude '.env.example' \
+      --exclude '.git' \
+      --exclude '.gitignore' \
+      --exclude '.github' \
+      --exclude '.DS_Store' \
+      --exclude 'docker-compose.yml' \
+      --exclude '.env' \
+      "$src_dir/" "$runtime_dir/"
+  else
+    # 无 rsync 时：用 cp -a 逐项复制（排除项手工处理）
+    # 该实现不追求“增量同步”，只保证首次安装资产落地
+    local item
+    shopt -s dotglob nullglob
+    for item in "$src_dir"/* "$src_dir"/.*; do
+      case "$(basename "$item")" in
+        "."|".."|"stack.meta"|".env.example"|".env"|".git"|".github"|".gitignore"|".DS_Store"|"docker-compose.yml")
+          continue
+          ;;
+      esac
+      # 只在目标不存在时复制，避免覆盖用户可能修改过的运行时文件
+      if [ ! -e "$runtime_dir/$(basename "$item")" ]; then
+        cp -a "$item" "$runtime_dir/" 2>/dev/null || true
+      fi
+    done
+    shopt -u dotglob nullglob
+  fi
+}
+
 install_stack() {
   local dir="$1"
 
@@ -103,6 +151,21 @@ install_stack() {
 
   # 准备运行目录
   prepare_runtime_dir "$runtime_dir"
+
+  # 网络确保（若声明）
+  ensure_network "${REQUIRES_NETWORK:-}"
+
+  #############################################
+  # v1.1.7 - stack asset sync (BEGIN)
+  #############################################
+  # 首次安装时，将 Stack 目录的私有资产完整投放到运行目录，
+  # 以保证 init/ 等子目录不会丢失。
+  #
+  # 注意：不会覆盖运行目录既有 .env
+  sync_stack_assets "$dir" "$runtime_dir"
+  #############################################
+  # v1.1.7 - stack asset sync (END)
+  #############################################
 
   #############################################
   # v1.0.3 - unified .env handling (BEGIN)
