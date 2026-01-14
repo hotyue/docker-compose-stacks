@@ -7,7 +7,7 @@ set -eu
 # 仅负责：
 # - 创建 WordPress 专属数据库
 # - 创建 WordPress 专属用户
-# - 授权该用户访问其数据库（不包含 LOCK TABLES / ALL PRIVILEGES）
+# - 授权该用户访问其数据库（不包含 LOCK TABLES / ALL PRIVILEGES / RELOAD）
 
 mariadb \
   -h "${WP_DB_HOST}" \
@@ -28,5 +28,4 @@ GRANT
   CREATE TEMPORARY TABLES
 ON \`${WP_DB_NAME}\`.* TO '${WP_DB_USER}'@'%';
 
-FLUSH PRIVILEGES;
 SQL
