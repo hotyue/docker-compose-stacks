@@ -9,6 +9,8 @@
 
 - 不创建、不管理、不初始化数据库
 
+- 不定义、不修改数据库账号与权限
+
 - 不依赖、不绑定任何应用 Stack
 
 - 数据库实例被明确视为 平台级资源
@@ -23,13 +25,13 @@ phpMyAdmin 适用于以下场景：
 
 - SQL 查询与调试
 
-- 用户权限与会话检查
+- 数据库账号权限与会话状态检查
 
 不适用于：
 
 - 数据库部署
 
-- 数据库高可用 / 主从 / 集群
+- 主从、集群、高可用等数据库架构管理
 
 - 数据库初始化或迁移
 
@@ -59,8 +61,8 @@ phpMyAdmin 适用于以下场景：
 ```env
 PMA_HOST=mariadb
 PMA_PORT=3306
-PMA_USER=example_user
-PMA_PASSWORD=example_password
+PMA_USER=db_admin
+PMA_PASSWORD=change_me_db_admin_password
 PMA_ARBITRARY=0
 ```
 
@@ -70,9 +72,27 @@ PMA_ARBITRARY=0
 | -----  | ----- |
 | PMA_HOST | 	数据库主机名或 IP |
 | PMA_PORT | 	数据库端口（通常为 3306） |
-| PMA_USER | 	登录数据库的用户名 |
+| PMA_USER | 	默认管理账号（推荐使用 db_admin） |
 | PMA_PASSWORD | 	登录数据库的密码 |
 | PMA_ARBITRARY | 	是否允许任意服务器登录（建议保持 0） |
+
+
+⚠️ 关于数据库账号的重要说明（v1.1.5 强制语义）
+
+- 不推荐、也不默认使用 root 账号
+
+- 推荐默认使用 平台级管理账号 db_admin
+
+- db_readonly 账号不在 .env 中配置
+
+如需验证只读权限，请在 phpMyAdmin 登录界面 手动输入：
+
+- 用户名：db_readonly
+
+- 密码：对应只读账号密码
+
+该行为用于验证 MariaDB Stack 中已冻结的账号权限治理模型。
+
 ### 4️⃣ 继续安装
 
 配置完成后，重新执行：
@@ -92,22 +112,42 @@ http://<服务器IP>:8018
 
 - phpMyAdmin 运行在项目既定的 proxy 外部 Docker 网络中
 
-- 数据库必须：
+- 数据库实例必须满足以下任一条件：
 
     - 位于同一 Docker 网络
-      或
 
-    - 通过宿主机网络可达
+    - 或通过宿主机网络直接访问
 
-## 六、安全建议
+## 六、账号与权限验证说明（v1.1.5 核心）
+
+本 Stack 用于验证 v1.1.4 已冻结的 MariaDB 账号治理模型：
+
+###使用 db_admin 登录：
+
+- 可创建 / 删除数据库
+
+- 可管理表结构
+
+- 可执行写入与结构性操作
+
+###使用 db_readonly 登录：
+
+- 可执行 SELECT 查询
+
+- INSERT / UPDATE / DELETE / DROP 等操作将被数据库权限拒绝
+
+phpMyAdmin 不限制权限，  
+权限行为完全由 MariaDB 数据库侧控制。
+
+## 七、安全建议
 
 - 强烈建议使用 非 root 数据库账号
 
 - 生产环境中保持 PMA_ARBITRARY=0
 
-- 如需公网访问，请自行在上层引入访问控制（如反向代理、认证）
+- 如需公网访问，请自行在上层引入访问控制（如反向代理、认证、防火墙）
 
-## 七、与其他 Stack 的关系
+## 八、与其他 Stack 的关系
 
 - phpMyAdmin 不是任何 Stack 的依赖
 
@@ -115,7 +155,7 @@ http://<服务器IP>:8018
 
 - 可与 MariaDB、Nezha、Matomo 等 Stack 并存，但职责完全隔离
 
-## 八、卸载说明
+## 九、卸载说明
 
 phpMyAdmin 不持久化任何业务数据。
 
@@ -125,7 +165,7 @@ phpMyAdmin 不持久化任何业务数据。
 
 - 不会影响数据库本身
 
-## 九、版本与兼容性
+## 十、版本与兼容性
 
 - phpMyAdmin 镜像：phpmyadmin:5
 
@@ -135,7 +175,7 @@ phpMyAdmin 不持久化任何业务数据。
 
     - MySQL
 
-## 十、责任边界声明
+## 十一、责任边界声明
 
 本 Stack：
 
