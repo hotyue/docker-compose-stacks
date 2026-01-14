@@ -162,11 +162,20 @@ install_stack() {
   # v1.0.3 - unified .env handling (END)
   #############################################
 
-  ensure_network "${REQUIRES_NETWORK:-}"
-
   echo "[$(timestamp)] 启动服务中..."
   (
     cd "$runtime_dir"
+
+    # v1.1.6：复制数据库初始化脚本（仅首次安装）
+    # docker-entrypoint-initdb.d 仅用于初始化阶段，是否执行由官方 entrypoint 判定
+    if [ -d "$dir/docker-entrypoint-initdb.d" ] && \
+       [ ! -d "$runtime_dir/docker-entrypoint-initdb.d" ]; then
+      mkdir -p "$runtime_dir/docker-entrypoint-initdb.d"
+      cp -a "$dir/docker-entrypoint-initdb.d/." \
+            "$runtime_dir/docker-entrypoint-initdb.d/" \
+            2>/dev/null || true
+    fi
+
     ln -sf "$dir/docker-compose.yml" docker-compose.yml
     $COMPOSE_CMD up -d
   )
