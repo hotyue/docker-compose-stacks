@@ -1,13 +1,33 @@
 #!/usr/bin/env bash
-set -euo pipefail
+set -e
 
-# v1.1.10 WordPress 逻辑数据库初始化（最终稳定版）
+# v1.1.10 WordPress 逻辑数据库初始化（最终冻结版）
 #
-# 设计目标：
-# - 初始化前校验管理账号是否具备授权能力
-# - 权限不足 → 明确失败并退出（exit 1）
-# - 权限满足 → 原子化完成初始化
-# - 绝不留下“半初始化”状态
+# 设计原则：
+# - 初始化脚本必须可在 bootstrap / installer 环境中稳定运行
+# - 不使用 set -u，避免因环境变量加载时序导致非预期退出
+# - 关键变量显式校验
+# - 权限不足时明确失败，不产生半初始化状态
+
+# ------------------------------
+# 必要变量校验
+# ------------------------------
+required_vars=(
+  WP_DB_HOST
+  WP_DB_PORT
+  WP_DB_ADMIN_USER
+  WP_DB_ADMIN_PASSWORD
+  WP_DB_NAME
+  WP_DB_USER
+  WP_DB_PASSWORD
+)
+
+for v in "${required_vars[@]}"; do
+  if [ -z "${!v:-}" ]; then
+    echo "[wp-db-init] FATAL: required env var '$v' is not set or empty." >&2
+    exit 1
+  fi
+done
 
 DB_CONN_ARGS=(
   -h "${WP_DB_HOST}"
