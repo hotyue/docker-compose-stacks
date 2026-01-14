@@ -1,35 +1,80 @@
 version: "3.9"
 
 services:
+  # ==============================
+  # Nezha Server 数据库初始化（一次性）
+  # ==============================
+  nezha-db-init:
+    image: mariadb:11
+    container_name: nezha-db-init
+    restart: "no"
+    command: ["sh", "/init/10-init-nezha-db.sh"]
+
+    environment:
+      TZ: ${TZ:-Asia/Shanghai}
+
+      # ==============================
+      # MariaDB 连接信息（资源级）
+      # ==============================
+      NEZHA_DB_HOST: ${NEZHA_DB_HOST}
+      NEZHA_DB_PORT: ${NEZHA_DB_PORT}
+
+      # ==============================
+      # Nezha Server 逻辑数据库
+      # ==============================
+      NEZHA_DB_NAME: ${NEZHA_DB_NAME}
+      NEZHA_DB_USER: ${NEZHA_DB_USER}
+      NEZHA_DB_PASSWORD: ${NEZHA_DB_PASSWORD}
+
+      # ==============================
+      # 初始化阶段专用管理账号
+      # ==============================
+      NEZHA_DB_ADMIN_USER: ${NEZHA_DB_ADMIN_USER}
+      NEZHA_DB_ADMIN_PASSWORD: ${NEZHA_DB_ADMIN_PASSWORD}
+
+    volumes:
+      - ./init:/init:ro
+
+    networks:
+      - proxy
+
+
+  # ==============================
+  # Nezha Server 主服务
+  # ==============================
   nezha:
     image: ghcr.io/nezhahq/nezha:latest
     container_name: nezha-server
-    restart: always
+    restart: unless-stopped
+
+    depends_on:
+      - nezha-db-init
 
     ports:
-      - "8008:8008"  # 不可以不映射，agent 需要访问
+      - "8008:8008"  # agent 必须可访问
 
     volumes:
       - ./data:/dashboard/data
 
     environment:
       # 时区
-      - TZ=UTC
+      TZ: ${TZ:-Asia/Shanghai}
 
-      # ===============================
-      # 数据库配置（外置 MariaDB / MySQL）
-      # ===============================
-      - DB_TYPE=${NEZHA_DB_TYPE}
-      - DB_HOST=${NEZHA_DB_HOST}
-      - DB_PORT=${NEZHA_DB_PORT}
-      - DB_NAME=${NEZHA_DB_NAME}
-      - DB_USER=${NEZHA_DB_USER}
-      - DB_PASSWORD=${NEZHA_DB_PASSWORD}
-      - DB_CHARSET=${NEZHA_DB_CHARSET}
-      - DB_TIMEZONE=${NEZHA_DB_TIMEZONE}
+      # ==============================
+      # 数据库配置（运行期 · 最小权限）
+      # ==============================
+      DB_TYPE: ${NEZHA_DB_TYPE}
+      DB_HOST: ${NEZHA_DB_HOST}
+      DB_PORT: ${NEZHA_DB_PORT}
+      DB_NAME: ${NEZHA_DB_NAME}
+      DB_USER: ${NEZHA_DB_USER}
+      DB_PASSWORD: ${NEZHA_DB_PASSWORD}
+      DB_CHARSET: ${NEZHA_DB_CHARSET}
+      DB_TIMEZONE: ${NEZHA_DB_TIMEZONE}
 
     networks:
       - proxy
+
 
 networks:
   proxy:
