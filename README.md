@@ -26,6 +26,24 @@
 
 ---
 
+## 📦 版本与变更记录
+
+本项目的所有**已发布版本变更事实**，均记录在 [`CHANGELOG.md`](./CHANGELOG.md) 中。
+
+该文件仅包含：
+
+- 已完成并冻结的实现
+- 已验证并确认成立的功能与治理结论
+
+不记录：
+
+- 计划中的功能
+- 未完成或已被终止的实现
+
+CHANGELOG.md 是本项目**版本演进事实的唯一权威入口**。
+
+---
+
 ## 快速开始（Quick Start）
 
 本仓库提供两种使用方式：
@@ -87,7 +105,8 @@ Installer 将会：
 
 ---
 
-## 当前可用应用栈（Stacks）
+## 当前可用应用栈（Stacks）  
+> 以下列表由 Installer 基于 stack.meta 自动生成，反映当前版本中**可用且受支持的 Stack**。
 
 <!-- STACKS:START -->
 
@@ -174,9 +193,12 @@ Installer 通过该文件实现 零硬编码发现与调度。
 │   ├── nezha/                # nezha VPS监控面板
 │   │   ├── server/
 │   │   └── agent/
+│   ├── vaultwarden/          # Vaultwarden（Bitwarden 兼容服务端）
+│   │   └── server/
 │   ├── matomo/               # WEB访问统计面板
 │   ├── mariadb/              # 数据库
-│   ├── phpMyAdmin/              # 数据库管理工具
+│   ├── phpMyAdmin/           # 数据库管理工具
+│   ├── wordpress/            # 一款blog系统
 │   └── _template/
 ├── docs/                     # 设计与规范文档
 ├── .installed                # 已安装记录（Installer 使用）
@@ -238,7 +260,8 @@ Installer 通过该文件实现 零硬编码发现与调度。
 
 ---
 
-## 后续计划（Roadmap）
+## 后续计划（Roadmap）  
+> 以下内容为非承诺性方向性设想，不构成版本计划或实现承诺。
 
 - Installer 多选安装 / 卸载
 
