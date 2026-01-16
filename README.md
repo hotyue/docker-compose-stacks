@@ -50,7 +50,7 @@ bash bootstrap.sh
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/hotyue/docker-compose-stacks/main/scripts/bootstrap.sh -o bootstrap.sh
-DCS_REF=v1.1.9 bash bootstrap.sh
+DCS_REF=v1.1.12 bash bootstrap.sh
 
 ```
 先下载再查看（更安全）：
