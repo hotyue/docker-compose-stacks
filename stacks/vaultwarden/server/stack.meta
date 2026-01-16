@@ -1,0 +1,7 @@
+# Stack metadata for installer
+
+NAME="Vaultwarden"
+CATEGORY="security"
+DESCRIPTION="轻量级 Bitwarden 兼容自托管密码管理服务端，支持 WebSocket 通知通道"
+REQUIRES_NETWORK="proxy"
+DEFAULT_ENABLE=false

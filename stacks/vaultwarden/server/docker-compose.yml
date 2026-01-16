@@ -1,0 +1,81 @@
+version: "3.8"
+
+services:
+  # ==============================
+  # Vaultwarden 数据库初始化（一次性）
+  # ==============================
+  vaultwarden-db-init:
+    image: mariadb:11
+    container_name: vaultwarden-db-init
+    restart: "no"
+    command: ["bash", "/init/10-init-vaultwarden-db.sh"]
+    environment:
+      TZ: ${TZ}
+
+      # MariaDB 连接信息（平台级）
+      VAULTWARDEN_DB_HOST: ${VAULTWARDEN_DB_HOST}
+      VAULTWARDEN_DB_PORT: ${VAULTWARDEN_DB_PORT}
+
+      # Vaultwarden 逻辑数据库
+      VAULTWARDEN_DB_NAME: ${VAULTWARDEN_DB_NAME}
+      VAULTWARDEN_DB_USER: ${VAULTWARDEN_DB_USER}
+      VAULTWARDEN_DB_PASSWORD: ${VAULTWARDEN_DB_PASSWORD}
+
+      # 初始化阶段专用管理账号（仅 init 容器使用）
+      VAULTWARDEN_DB_ADMIN_USER: ${VAULTWARDEN_DB_ADMIN_USER}
+      VAULTWARDEN_DB_ADMIN_PASSWORD: ${VAULTWARDEN_DB_ADMIN_PASSWORD}
+
+    volumes:
+      - ./init:/init:ro
+    networks:
+      - proxy
+
+
+  # ==============================
+  # Vaultwarden 主服务
+  # ==============================
+  vaultwarden:
+    image: ${VAULTWARDEN_IMAGE}
+    container_name: ${VAULTWARDEN_CONTAINER_NAME}
+    restart: unless-stopped
+    depends_on:
+      - vaultwarden-db-init
+
+    # 按你们现有 stacks 习惯保留宿主机端口映射（便于直连验证）
+    # NPM 反代场景也可不依赖该端口映射，通过 proxy 网络直接转发到服务名 vaultwarden
+    ports:
+      - "${VAULTWARDEN_HTTP_PORT}:${VAULTWARDEN_HTTP_PORT}"
+
+    environment:
+      TZ: ${TZ}
+
+      # ===== 监听端口裁定（强制） =====
+      ROCKET_PORT: ${VAULTWARDEN_HTTP_PORT}
+      ROCKET_ADDRESS: "0.0.0.0"
+
+      # ===== 外部访问域名（建议填写最终域名，用于生成链接、邮件等）=====
+      DOMAIN: ${VAULTWARDEN_DOMAIN}
+
+      # ===== 数据库连接（强制：运行期仅使用专用用户）=====
+      DATABASE_URL: "mysql://${VAULTWARDEN_DB_USER}:${VAULTWARDEN_DB_PASSWORD}@${VAULTWARDEN_DB_HOST}:${VAULTWARDEN_DB_PORT}/${VAULTWARDEN_DB_NAME}"
+
+      # ===== WebSocket（通知通道）=====
+      # 裁定：默认启用（Vaultwarden 默认即启用）。
+      # 不在此处设置 WEBSOCKET_ENABLED=false
+      #
+      # 注意：需要 NPM 侧启用 WebSocket 支持（Upgrade/Connection 头），Cloudflare 橙云/隧道亦支持。
+
+      # ===== 可选治理项（按需启用）=====
+      # SIGNUPS_ALLOWED: "false"
+      # INVITATIONS_ALLOWED: "true"
+      # ADMIN_TOKEN: ${VAULTWARDEN_ADMIN_TOKEN}
+
+    volumes:
+      - ./data:/data
+    networks:
+      - proxy
+
+
+networks:
+  proxy:
+    external: true

@@ -110,6 +110,11 @@ Installer 将会：
 - **MariaDB**  
   MariaDB 单机数据库服务（容器化），内置初始化治理与平台级账号模型，适用于通用业务数据存储.
 
+### 安全
+
+- **Vaultwarden**  
+  轻量级 Bitwarden 兼容自托管密码管理服务端，支持 WebSocket 通知通道
+
 ### 工具
 
 - **phpMyAdmin**  
