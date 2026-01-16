@@ -41,29 +41,23 @@ services:
     depends_on:
       - vaultwarden-db-init
 
-    # 按你们现有 stacks 习惯保留宿主机端口映射（便于直连验证）
-    # NPM 反代场景也可不依赖该端口映射，通过 proxy 网络直接转发到服务名 vaultwarden
+    # 可选：宿主机直连调试端口
+    # NPM 反代不依赖该映射，直接走 proxy 网络访问容器 80 端口
     ports:
-      - "${VAULTWARDEN_HTTP_PORT}:${VAULTWARDEN_HTTP_PORT}"
+      - "${VAULTWARDEN_HTTP_PORT}:80"
 
     environment:
       TZ: ${TZ}
 
-      # ===== 监听端口裁定（强制） =====
-      ROCKET_PORT: ${VAULTWARDEN_HTTP_PORT}
-      ROCKET_ADDRESS: "0.0.0.0"
-
-      # ===== 外部访问域名（建议填写最终域名，用于生成链接、邮件等）=====
+      # ===== 外部访问域名（必须与实际 HTTPS 访问地址完全一致）=====
       DOMAIN: ${VAULTWARDEN_DOMAIN}
 
-      # ===== 数据库连接（强制：运行期仅使用专用用户）=====
+      # ===== 数据库连接（运行期仅使用专用用户）=====
       DATABASE_URL: "mysql://${VAULTWARDEN_DB_USER}:${VAULTWARDEN_DB_PASSWORD}@${VAULTWARDEN_DB_HOST}:${VAULTWARDEN_DB_PORT}/${VAULTWARDEN_DB_NAME}"
 
       # ===== WebSocket（通知通道）=====
-      # 裁定：默认启用（Vaultwarden 默认即启用）。
-      # 不在此处设置 WEBSOCKET_ENABLED=false
-      #
-      # 注意：需要 NPM 侧启用 WebSocket 支持（Upgrade/Connection 头），Cloudflare 橙云/隧道亦支持。
+      # 官方默认启用，不设置 WEBSOCKET_ENABLED
+      # 需要 Nginx Proxy Manager 启用 WebSocket Support
 
       # ===== 可选治理项（按需启用）=====
       # SIGNUPS_ALLOWED: "false"
