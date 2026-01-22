@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -e
+set -euo pipefail
 
 # v1.1.13 Traccar 逻辑数据库初始化
 # 仅负责：
@@ -10,12 +10,29 @@ set -e
 # 适配 MariaDB 11
 # 使用 mariadb 客户端
 # 幂等，可重复执行
+#
+# ⚠️ 注意：
+# - 使用平台级 DB_ADMIN_USER，仅用于初始化阶段
+# - 运行期 Traccar 仅使用 TRACCAR_DB_USER
+
+echo "Waiting for MariaDB to be ready..."
+
+until mariadb \
+  -h "${MARIADB_HOST}" \
+  -P "${MARIADB_PORT}" \
+  -u "${DB_ADMIN_USER}" \
+  -p"${DB_ADMIN_PASSWORD}" \
+  -e "SELECT 1" >/dev/null 2>&1; do
+  sleep 2
+done
+
+echo "Initializing Traccar database and user..."
 
 mariadb \
-  -h "${TRACCAR_DB_HOST}" \
-  -P "${TRACCAR_DB_PORT}" \
-  -u "${TRACCAR_DB_ADMIN_USER}" \
-  -p"${TRACCAR_DB_ADMIN_PASSWORD}" <<SQL
+  -h "${MARIADB_HOST}" \
+  -P "${MARIADB_PORT}" \
+  -u "${DB_ADMIN_USER}" \
+  -p"${DB_ADMIN_PASSWORD}" <<SQL
 
 CREATE DATABASE IF NOT EXISTS \`${TRACCAR_DB_NAME}\`
   CHARACTER SET utf8mb4
@@ -31,6 +48,10 @@ GRANT
   EXECUTE,
   CREATE VIEW, SHOW VIEW,
   EVENT, TRIGGER
-ON \`${TRACCAR_DB_NAME}\`.* TO '${TRACCAR_DB_USER}'@'%';
+ON \`${TRACCAR_DB_NAME}\`.*
+TO '${TRACCAR_DB_USER}'@'%';
 
+#FLUSH PRIVILEGES;
 SQL
+
+echo "Traccar database initialization completed."
