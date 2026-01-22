@@ -1,4 +1,7 @@
 services:
+  # ------------------------------------------------------------
+  # 初始化数据目录权限
+  # ------------------------------------------------------------
   init-perms:
     image: busybox:1.36
     command: sh -c 'mkdir -p /data && chmod 775 /data'
@@ -8,23 +11,78 @@ services:
       - proxy
     restart: "no"
 
+  # ------------------------------------------------------------
+  # MariaDB 主服务
+  # ------------------------------------------------------------
   mariadb:
     image: mariadb:11
     container_name: mariadb
+
     depends_on:
       init-perms:
         condition: service_completed_successfully
+
     env_file:
       - .env
+
     ports:
       - "${MARIADB_PORT:-3306}:3306"
+
+    # ----------------------------------------------------------
+    # 运行参数（平台级内存治理 + 兼容现有业务）
+    #
+    # 【新增内容说明】
+    # 1. 明确限制 InnoDB Buffer Pool，防止数据库吃满整机内存
+    # 2. 所有参数均为运行期参数，不影响已有数据
+    # 3. 适配 Traccar / Matomo / WordPress 等多业务共用场景
+    # ----------------------------------------------------------
     command:
-      --max_allowed_packet=256M    #mariadb默认16MB，matomo建议用64MB
+      # --- 原有参数（保留） ---
+      --max_allowed_packet=256M
+      # ↑ 保留原因：
+      #   - MariaDB 默认 16MB
+      #   - Matomo / 统计类业务可能需要更大 packet
+
+      # --- 新增：InnoDB 内存治理（核心修改） ---
+      --innodb-buffer-pool-size=512M
+      # ↑ 新增原因：
+      #   - 明确限制 InnoDB 缓存上限
+      #   - 防止 Traccar 启动后拉满内存
+
+      --innodb-buffer-pool-instances=1
+      # ↑ 新增原因：
+      #   - 在 512M Buffer Pool 场景下不需要多实例
+      #   - 减少内存碎片
+
+      --innodb-log-buffer-size=64M
+      # ↑ 新增原因：
+      #   - 平衡写入性能与内存占用
+      #   - 适合 Traccar 高频写入场景
+
+      # --- 新增：连接与缓存治理 ---
+      --max-connections=150
+      # ↑ 新增原因：
+      #   - 防止高峰期（Matomo / WordPress）连接数失控
+      #   - 150 已覆盖当前全部业务需求
+
+      --table-open-cache=400
+      # ↑ 新增原因：
+      #   - 控制打开表缓存规模
+      #   - 避免表缓存无限增长
+
+      --tmp-table-size=64M
+      --max-heap-table-size=64M
+      # ↑ 新增原因：
+      #   - 限制内存临时表大小
+      #   - 防止统计类查询瞬间吃光内存
+
     volumes:
       - ./data:/var/lib/mysql
       - ./docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d:ro
+
     networks:
       - proxy
+
     restart: unless-stopped
 
 networks:
