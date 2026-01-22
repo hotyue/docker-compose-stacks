@@ -56,20 +56,29 @@ SQL
         condition: service_completed_successfully
     env_file:
       - .env
+
+    # 只暴露设备上报端口（必须）
     ports:
-      - "${TRACCAR_WEB_PORT:-8082}:8082"
+
+      # 管理端口（调试 / 直连运维保留）
+      - "8048:8082"
+
+      # 设备上报端口（必须暴露）
       - "${TRACCAR_DEVICE_PORT_RANGE:-5000-5300}:5000-5300"
       - "${TRACCAR_DEVICE_PORT_RANGE:-5000-5300}:5000-5300/udp"
+
     volumes:
       - ./data:/opt/traccar/data
       - ./logs:/opt/traccar/logs
       - ./conf/traccar.xml:/opt/traccar/conf/traccar.xml:ro
+
     environment:
       CONFIG_USE_ENVIRONMENT_VARIABLES: "true"
       DATABASE_DRIVER: com.mysql.cj.jdbc.Driver
       DATABASE_URL: ${TRACCAR_DATABASE_URL}
       DATABASE_USER: ${TRACCAR_DB_USER}
       DATABASE_PASSWORD: ${TRACCAR_DB_PASSWORD}
+
     networks:
       - proxy
     restart: unless-stopped
