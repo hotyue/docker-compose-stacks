@@ -1,6 +1,6 @@
 services:
   # ------------------------------------------------------------
-  # 初始化数据目录权限
+  # 初始化数据目录权限（保持不变）
   # ------------------------------------------------------------
   init-perms:
     image: busybox:1.36
@@ -29,52 +29,31 @@ services:
       - "${MARIADB_PORT:-3306}:3306"
 
     # ----------------------------------------------------------
-    # 运行参数（平台级内存治理 + 兼容现有业务）
-    #
-    # 【新增内容说明】
-    # 1. 明确限制 InnoDB Buffer Pool，防止数据库吃满整机内存
-    # 2. 所有参数均为运行期参数，不影响已有数据
-    # 3. 适配 Traccar / Matomo / WordPress 等多业务共用场景
+    # 【关键修复点】
+    # command 必须是数组（list），不能直接写多行参数
     # ----------------------------------------------------------
     command:
-      # --- 原有参数（保留） ---
-      --max_allowed_packet=256M
-      # ↑ 保留原因：
-      #   - MariaDB 默认 16MB
-      #   - Matomo / 统计类业务可能需要更大 packet
+      - --max_allowed_packet=256M
+      # ↑ 原有参数：保留，兼容 Matomo 大查询
 
-      # --- 新增：InnoDB 内存治理（核心修改） ---
-      --innodb-buffer-pool-size=512M
-      # ↑ 新增原因：
-      #   - 明确限制 InnoDB 缓存上限
-      #   - 防止 Traccar 启动后拉满内存
+      - --innodb-buffer-pool-size=512M
+      # ↑ 新增：限制 InnoDB 缓冲池，防止数据库吃满整机内存
 
-      --innodb-buffer-pool-instances=1
-      # ↑ 新增原因：
-      #   - 在 512M Buffer Pool 场景下不需要多实例
-      #   - 减少内存碎片
+      - --innodb-buffer-pool-instances=1
+      # ↑ 新增：小内存场景，避免 buffer pool 分片浪费
 
-      --innodb-log-buffer-size=64M
-      # ↑ 新增原因：
-      #   - 平衡写入性能与内存占用
-      #   - 适合 Traccar 高频写入场景
+      - --innodb-log-buffer-size=64M
+      # ↑ 新增：兼顾 Traccar 高频写入与内存占用
 
-      # --- 新增：连接与缓存治理 ---
-      --max-connections=150
-      # ↑ 新增原因：
-      #   - 防止高峰期（Matomo / WordPress）连接数失控
-      #   - 150 已覆盖当前全部业务需求
+      - --max-connections=150
+      # ↑ 新增：防止高并发时连接数失控
 
-      --table-open-cache=400
-      # ↑ 新增原因：
-      #   - 控制打开表缓存规模
-      #   - 避免表缓存无限增长
+      - --table-open-cache=400
+      # ↑ 新增：限制表缓存，控制 metadata 内存
 
-      --tmp-table-size=64M
-      --max-heap-table-size=64M
-      # ↑ 新增原因：
-      #   - 限制内存临时表大小
-      #   - 防止统计类查询瞬间吃光内存
+      - --tmp-table-size=64M
+      - --max-heap-table-size=64M
+      # ↑ 新增：限制内存临时表，避免统计查询炸内存
 
     volumes:
       - ./data:/var/lib/mysql
