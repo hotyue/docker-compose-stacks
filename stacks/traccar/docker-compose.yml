@@ -1,4 +1,7 @@
 services:
+  # ------------------------------------------------------------
+  # Traccar 数据库初始化（一次性）
+  # ------------------------------------------------------------
   traccar-db-init:
     image: mariadb:11
     container_name: traccar-db-init
@@ -11,39 +14,78 @@ services:
     networks:
       - proxy
 
+  # ------------------------------------------------------------
+  # Traccar 主服务
+  # ------------------------------------------------------------
   traccar:
     image: traccar/traccar:latest
     container_name: traccar
+
     depends_on:
       traccar-db-init:
         condition: service_completed_successfully
+
     env_file:
       - .env
 
+    # ------------------------------------------------------------
+    # 端口映射
+    # ------------------------------------------------------------
     ports:
-      # 管理端口（调试 / 直连运维）
+      # 管理端口（调试 / 直连运维 / NPM 反代入口）
       - "8048:8082"
 
       # 设备上报端口（必须暴露）
       - "${TRACCAR_DEVICE_PORT_RANGE:-5000-5300}:5000-5300"
       - "${TRACCAR_DEVICE_PORT_RANGE:-5000-5300}:5000-5300/udp"
 
+    # ------------------------------------------------------------
+    # 持久化
+    # ------------------------------------------------------------
     volumes:
       - ./data:/opt/traccar/data
       - ./logs:/opt/traccar/logs
       - ./conf/traccar.xml:/opt/traccar/conf/traccar.xml:ro
 
+    # ------------------------------------------------------------
+    # 关键优化项（JVM + Traccar）
+    # ------------------------------------------------------------
     environment:
+      # 原有
       CONFIG_USE_ENVIRONMENT_VARIABLES: "true"
       DATABASE_DRIVER: com.mysql.cj.jdbc.Driver
       DATABASE_URL: ${TRACCAR_DATABASE_URL}
       DATABASE_USER: ${TRACCAR_DB_USER}
       DATABASE_PASSWORD: ${TRACCAR_DB_PASSWORD}
 
+      # ✅【新增】JVM 内存与 GC 优化
+      JAVA_OPTS: >
+        -Xms256m
+        -Xmx1024m
+        -XX:+UseG1GC
+        -XX:MaxGCPauseMillis=200
+        -XX:+UseStringDeduplication
+        -Djava.awt.headless=true
+
+      # ✅【新增】限制 Traccar 后台线程池规模（防止小机爆线程）
+      TC_MAX_THREADS: "50"
+
+    # ------------------------------------------------------------
+    # 资源限制（防止 JVM / 容器失控）
+    # ------------------------------------------------------------
+    deploy:
+      resources:
+        limits:
+          memory: 1500M
+
     networks:
       - proxy
+
     restart: unless-stopped
 
+# ------------------------------------------------------------
+# 网络
+# ------------------------------------------------------------
 networks:
   proxy:
     external: true
