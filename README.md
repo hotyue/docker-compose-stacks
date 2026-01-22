@@ -138,6 +138,8 @@ Installer 将会：
 
 - **phpMyAdmin**  
   基于 Web 的 MariaDB / MySQL 数据库管理工具
+- **Traccar**  
+  Traccar GPS 设备管理与追踪服务，使用平台级 MariaDB，符合 v1.1.13 数据库治理规范.
 - **WordPress**  
   WordPress 内容管理系统（外置数据库）
 

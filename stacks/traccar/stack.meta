@@ -1,0 +1,5 @@
+NAME="Traccar"
+CATEGORY="utility"
+DESCRIPTION="Traccar GPS 设备管理与追踪服务，使用平台级 MariaDB，符合 v1.1.13 数据库治理规范."
+REQUIRES_NETWORK="proxy"
+DEFAULT_ENABLE=false

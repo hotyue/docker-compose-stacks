@@ -1,0 +1,79 @@
+services:
+  traccar-db-init:
+    image: mariadb:11
+    container_name: traccar-db-init
+    restart: "no"
+    env_file:
+      - .env
+    command: >
+      bash -lc '
+        set -euo pipefail;
+
+        echo "Waiting for MariaDB...";
+        until mariadb
+          -h "${MARIADB_HOST}"
+          -P "${MARIADB_PORT}"
+          -u "${DB_ADMIN_USER}"
+          -p"${DB_ADMIN_PASSWORD}"
+          -e "SELECT 1" >/dev/null 2>&1; do
+          sleep 2;
+        done;
+
+        mariadb
+          -h "${MARIADB_HOST}"
+          -P "${MARIADB_PORT}"
+          -u "${DB_ADMIN_USER}"
+          -p"${DB_ADMIN_PASSWORD}" <<SQL
+
+        CREATE DATABASE IF NOT EXISTS \`${TRACCAR_DB_NAME}\`
+          CHARACTER SET utf8mb4
+          COLLATE utf8mb4_unicode_ci;
+
+        CREATE USER IF NOT EXISTS '${TRACCAR_DB_USER}'@'%'
+          IDENTIFIED BY '${TRACCAR_DB_PASSWORD}';
+
+        GRANT
+          SELECT, INSERT, UPDATE, DELETE,
+          CREATE, DROP, INDEX, ALTER,
+          CREATE TEMPORARY TABLES,
+          EXECUTE,
+          CREATE VIEW, SHOW VIEW,
+          EVENT, TRIGGER
+        ON \`${TRACCAR_DB_NAME}\`.*
+        TO '${TRACCAR_DB_USER}'@'%';
+
+        FLUSH PRIVILEGES;
+SQL
+      '
+    networks:
+      - proxy
+
+  traccar:
+    image: traccar/traccar:latest
+    container_name: traccar
+    depends_on:
+      traccar-db-init:
+        condition: service_completed_successfully
+    env_file:
+      - .env
+    ports:
+      - "${TRACCAR_WEB_PORT:-8082}:8082"
+      - "${TRACCAR_DEVICE_PORT_RANGE:-5000-5300}:5000-5300"
+      - "${TRACCAR_DEVICE_PORT_RANGE:-5000-5300}:5000-5300/udp"
+    volumes:
+      - ./data:/opt/traccar/data
+      - ./logs:/opt/traccar/logs
+      - ./conf/traccar.xml:/opt/traccar/conf/traccar.xml:ro
+    environment:
+      CONFIG_USE_ENVIRONMENT_VARIABLES: "true"
+      DATABASE_DRIVER: com.mysql.cj.jdbc.Driver
+      DATABASE_URL: ${TRACCAR_DATABASE_URL}
+      DATABASE_USER: ${TRACCAR_DB_USER}
+      DATABASE_PASSWORD: ${TRACCAR_DB_PASSWORD}
+    networks:
+      - proxy
+    restart: unless-stopped
+
+networks:
+  proxy:
+    external: true
