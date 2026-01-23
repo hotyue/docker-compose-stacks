@@ -12,3 +12,23 @@ Traccar GPS 设备管理与追踪服务。
 
 - Web UI: 8082
 - 设备端口: 5000–5300 (TCP / UDP)
+
+
+## Lifecycle (v1.2.0)
+
+From v1.2.0, Traccar stack follows strict lifecycle governance:
+
+- Database initialization is executed as an Installer task:
+  - Task ID: `traccar.db.init`
+  - Source: `tasks/traccar-db-init.sh`
+- `docker-compose.yml` defines **runtime services only**
+- No initialization or migration logic is allowed inside compose services
+
+Lifecycle stages:
+
+1. **prepare**
+   - Execute `traccar.db.init`
+2. **run**
+   - Start `traccar` service via docker compose
+
+Re-running Installer is safe and idempotent.

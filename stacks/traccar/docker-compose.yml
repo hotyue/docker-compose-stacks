@@ -1,29 +1,10 @@
 services:
   # ------------------------------------------------------------
-  # Traccar 数据库初始化（一次性）
-  # ------------------------------------------------------------
-  traccar-db-init:
-    image: mariadb:11
-    container_name: traccar-db-init
-    restart: "no"
-    env_file:
-      - .env
-    volumes:
-      - ./init:/init:ro
-    command: ["/bin/bash", "/init/10-init-traccar-db.sh"]
-    networks:
-      - proxy
-
-  # ------------------------------------------------------------
   # Traccar 主服务
   # ------------------------------------------------------------
   traccar:
     image: traccar/traccar:latest
     container_name: traccar
-
-    depends_on:
-      traccar-db-init:
-        condition: service_completed_successfully
 
     env_file:
       - .env
