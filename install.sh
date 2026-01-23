@@ -19,7 +19,36 @@ RUNTIME_ROOT="/opt/docker"
 # =========================
 # shellcheck disable=SC1090
 source "$REPO_ROOT/scripts/lib/runtime.sh"
+source "$REPO_ROOT/scripts/lib/lifecycle.sh"
 detect_compose
+
+# =========================
+# v1.2.0 Prepare Phase
+# =========================
+
+run_prepare_tasks_traccar() {
+  echo "[$(timestamp)] [prepare] traccar: running prepare tasks"
+
+  local task
+  for task in "${TASKS_prepare_traccar[@]}"; do
+    IFS=':' read -r task_id task_path <<<"$task"
+
+    echo "[$(timestamp)] [prepare] running task: $task_id"
+
+    if [ ! -x "$REPO_ROOT/$task_path" ]; then
+      echo "[$(timestamp)] [prepare] task not executable: $task_path"
+      exit 1
+    fi
+
+    # shellcheck disable=SC1090
+    "$REPO_ROOT/$task_path" || {
+      echo "[$(timestamp)] [prepare] task failed: $task_id"
+      exit 1
+    }
+  done
+
+  echo "[$(timestamp)] [prepare] traccar: all prepare tasks completed"
+}
 
 timestamp() {
   date -u +"%Y-%m-%dT%H:%M:%SZ"
@@ -188,6 +217,14 @@ install_stack() {
     exit 0
   fi
 
+  # =========================
+  # v1.2.0 prepare phase (traccar only)
+  # =========================
+  if [ "$(basename "$dir")" = "traccar" ]; then
+    echo "[$(timestamp)] v1.2.0 prepare phase: traccar"
+    run_prepare_tasks_traccar
+  fi
+
   echo "[$(timestamp)] 启动服务中..."
   (
     cd "$runtime_dir"
@@ -199,6 +236,20 @@ install_stack() {
   rm -f "$PENDING_FILE"
   echo "[$(timestamp)] 安装完成：$NAME"
 }
+
+# =========================
+# v1.2.0 prepare command
+# =========================
+if [ "${1:-}" = "prepare" ]; then
+  stack="${2:-}"
+  if [ "$stack" != "traccar" ]; then
+    echo "[$(timestamp)] prepare only supports stack: traccar (v1.2.0)"
+    exit 1
+  fi
+
+  run_prepare_tasks_traccar
+  exit 0
+fi
 
 main() {
   need_cmd docker
