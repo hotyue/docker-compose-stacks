@@ -2,80 +2,26 @@ version: "3.9"
 
 services:
   # ============================================================================
-  # 服务 1: 数据库治理与配置引导 (Init Container)
-  # ============================================================================
-  # 职责：
-  # 1. 等待数据库启动并创建专属库/用户
-  # 2. 强制生成 config.yaml 以锁定 MySQL 模式 (防止回退 SQLite)
-  # ============================================================================
-  nezha-db-init:
-    image: mariadb:11
-    container_name: nezha-db-init
-    restart: "no"
-    command: ["sh", "/init/10-init-nezha-db.sh"]
-
-    environment:
-      TZ: ${TZ:-Asia/Shanghai}
-
-      # --- 数据库管理员权限 (仅用于建库/建用户) ---
-      NEZHA_DB_ADMIN_USER: ${NEZHA_DB_ADMIN_USER}
-      NEZHA_DB_ADMIN_PASSWORD: ${NEZHA_DB_ADMIN_PASSWORD}
-
-      # --- 目标数据库连接信息 ---
-      NEZHA_DB_HOST: ${NEZHA_DB_HOST}
-      NEZHA_DB_PORT: ${NEZHA_DB_PORT}
-
-      # --- 待初始化的业务库信息 ---
-      NEZHA_DB_NAME: ${NEZHA_DB_NAME}
-      NEZHA_DB_USER: ${NEZHA_DB_USER}
-      NEZHA_DB_PASSWORD: ${NEZHA_DB_PASSWORD}
-
-      # --- 配置生成参数 ---
-      # 用于写入 config.yaml 中的 httpport
-      NEZHA_HTTP_PORT: ${NEZHA_HTTP_PORT:-8008}
-
-    volumes:
-      # 挂载初始化脚本
-      - ./init:/init:ro
-      # [关键修改] 挂载数据目录
-      # 允许 init 容器写入 config.yaml，主容器才能读取到
-      - ./data:/dashboard/data
-
-    networks:
-      - proxy
-
-  # ============================================================================
-  # 服务 2: 哪吒监控面板 (Main Server)
+  # 哪吒监控面板 (Main Server)
+  # 使用内置 SQLite 数据库
   # ============================================================================
   nezha:
     image: ghcr.io/nezhahq/nezha:latest
     container_name: nezha-server
     restart: unless-stopped
 
-    depends_on:
-      # 必须等待初始化完成 (包含配置文件生成)
-      - nezha-db-init
-
     ports:
-      # 映射面板端口 (Agent 通信也使用此端口)
+      # 映射面板端口
       - "${NEZHA_HTTP_PORT:-8008}:8008"
 
     volumes:
-      # 挂载数据目录 (包含 init 容器生成的 config.yaml)
+      # 挂载数据目录
+      # SQLite 数据库文件 (sqlite.db) 将自动生成在此目录下
       - ./data:/dashboard/data
 
     environment:
+      # 仅保留时区配置
       TZ: ${TZ:-Asia/Shanghai}
-
-      # --- 运行期数据库配置 ---
-      # 注意：如果 data/config.yaml 存在，Nezha 优先读取文件，
-      # 但保留这些环境变量作为文档说明或备用是个好习惯。
-      DB_TYPE: ${NEZHA_DB_TYPE}
-      DB_HOST: ${NEZHA_DB_HOST}
-      DB_PORT: ${NEZHA_DB_PORT}
-      DB_NAME: ${NEZHA_DB_NAME}
-      DB_USER: ${NEZHA_DB_USER}
-      DB_PASSWORD: ${NEZHA_DB_PASSWORD}
 
     networks:
       - proxy
