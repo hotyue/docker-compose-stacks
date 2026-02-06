@@ -20,10 +20,8 @@ services:
       - ./data:/dashboard/data
 
     environment:
-      # 时区
+      # 仅保留时区配置
       TZ: ${TZ:-Asia/Shanghai}
-      # 尝试设置默认语言为简体中文 (如果镜像支持此变量)
-      NEZHA_LANGUAGE: zh-CN
 
     networks:
       - proxy
