@@ -193,6 +193,28 @@ install_stack() {
     cd "$runtime_dir"
     ln -sf "$dir/docker-compose.yml" docker-compose.yml
     $COMPOSE_CMD up -d
+    # === 智能清理逻辑 ===
+    echo "[$(timestamp)] 检查并清理初始化容器..."
+    sleep 3 # 给它一点时间执行
+    
+    # 1. 获取所有已停止的容器ID
+    stopped_containers=$($COMPOSE_CMD ps -a --filter "status=exited" -q)
+    
+    if [ -n "$stopped_containers" ]; then
+      for container_id in $stopped_containers; do
+        # 2. 检查退出代码
+        exit_code=$(docker inspect "$container_id" --format='{{.State.ExitCode}}')
+        
+        if [ "$exit_code" == "0" ]; then
+           # 3. 只有成功退出的才删除
+           echo "  - 清理成功完成的任务容器: $container_id"
+           docker rm "$container_id" >/dev/null
+        else
+           # 4. 失败的保留现场
+           echo "  ! 警告: 容器 $container_id 异常退出 (Code: $exit_code)，已保留用于调试。"
+        fi
+      done
+    fi  
   )
 
   mark_installed "$dir"
