@@ -2,36 +2,6 @@ version: "3.8"
 
 services:
   # ==============================
-  # Nginx Proxy Manager 数据库初始化（一次性）
-  # ==============================
-  npm-db-init:
-    image: mariadb:11
-    container_name: npm-db-init
-    restart: "no"
-    command: ["sh", "/init/10-init-npm-db.sh"]
-    environment:
-      TZ: ${TZ:-Asia/Shanghai}
-
-      # MariaDB 连接信息（资源级，共享）
-      NPM_DB_HOST: ${NPM_DB_HOST}
-      NPM_DB_PORT: ${NPM_DB_PORT}
-
-      # Nginx Proxy Manager 逻辑数据库
-      NPM_DB_NAME: ${NPM_DB_NAME}
-      NPM_DB_USER: ${NPM_DB_USER}
-      NPM_DB_PASSWORD: ${NPM_DB_PASSWORD}
-
-      # 初始化阶段专用管理账号
-      NPM_DB_ADMIN_USER: ${NPM_DB_ADMIN_USER}
-      NPM_DB_ADMIN_PASSWORD: ${NPM_DB_ADMIN_PASSWORD}
-
-    volumes:
-      - ./init:/init:ro
-    networks:
-      - proxy
-
-
-  # ==============================
   # Nginx Proxy Manager 主服务
   # ==============================
   npm:
@@ -39,9 +9,7 @@ services:
     container_name: nginx-proxy-manager
     restart: unless-stopped
 
-    depends_on:
-      - npm-db-init
-
+    # 🌟 移除对 npm-db-init 的依赖
     ports:
       - "80:80"
       - "81:81"
@@ -49,7 +17,6 @@ services:
 
     environment:
       TZ: ${TZ:-Asia/Shanghai}
-
       # Database configuration (external MariaDB / MySQL)
       DB_MYSQL_HOST: ${NPM_DB_HOST}
       DB_MYSQL_PORT: ${NPM_DB_PORT}
@@ -63,7 +30,6 @@ services:
 
     networks:
       - proxy
-
 
 networks:
   proxy:
