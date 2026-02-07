@@ -4,13 +4,19 @@ services:
   phpmyadmin:
     image: phpmyadmin:5
     container_name: phpmyadmin
-    env_file:
-      - .env
+    restart: unless-stopped
+    # 🌟 显式环境变量注入，方便 Installer 校验
+    environment:
+      TZ: ${TZ:-UTC}
+      PMA_HOST: ${PMA_HOST:-mariadb}
+      PMA_PORT: ${PMA_PORT:-3306}
+      PMA_USER: ${PMA_USER:-db_admin}
+      PMA_PASSWORD: ${PMA_PASSWORD}
+      PMA_ARBITRARY: ${PMA_ARBITRARY:-0}
     ports:
       - "8018:80"
     networks:
       - proxy
-    restart: unless-stopped
 
 networks:
   proxy:
