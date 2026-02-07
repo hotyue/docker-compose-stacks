@@ -3,7 +3,7 @@ version: "3.8"
 services:
 
   # ============================================================================
-  # Vaultwarden 主服务 (v1.3.5 终极生产修复版)
+  # Vaultwarden 主服务 (v1.3.6 终极生产版)
   # ============================================================================
   vaultwarden:
     image: ${VAULTWARDEN_IMAGE}
@@ -17,24 +17,18 @@ services:
       TZ: ${TZ}
       DOMAIN: ${VAULTWARDEN_DOMAIN}
 
-      # ===== 数据库连接 (彻底解决 Access Denied) =====
-      # 🌟 方案：分立变量注入。直接将参数交给程序，不经过 DATABASE_URL 字符串解析
-      # 这种方式能完美保留密码中的 $9, #, @ 等特殊字符
-      DATABASE_METHOD: mysql
+      # ===== 数据库连接 (强制禁用 SQLite) =====
+      # 1. 必须提供协议头 mysql:// 
+      # 2. 这里的变量插值由 Docker 负责，能有效保护包含 $9 的强密码
+      DATABASE_URL: mysql://${VAULTWARDEN_DB_USER}:${VAULTWARDEN_DB_PASSWORD}@${VAULTWARDEN_DB_HOST}:${VAULTWARDEN_DB_PORT}/${VAULTWARDEN_DB_NAME}
+      
+      # 3. 注入分立变量作为双重保险
       DB_TYPE: mysql
       DB_HOST: ${VAULTWARDEN_DB_HOST}
       DB_PORT: ${VAULTWARDEN_DB_PORT}
       DB_NAME: ${VAULTWARDEN_DB_NAME}
       DB_USER: ${VAULTWARDEN_DB_USER}
       DB_PW: ${VAULTWARDEN_DB_PASSWORD}
-      
-      # 连接调优
-      DATABASE_MAX_CONNS: 10
-      DB_CONNECTION_RETRIES: 15
-
-      # ===== 可选治理项 =====
-      # SIGNUPS_ALLOWED: "false"
-      # ADMIN_TOKEN: ${VAULTWARDEN_ADMIN_TOKEN}
 
     volumes:
       - ./data:/data
