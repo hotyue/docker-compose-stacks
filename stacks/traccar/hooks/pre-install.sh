@@ -2,15 +2,15 @@
 set -euo pipefail
 
 # ==============================================================================
-# v1.2.1 · Traccar Pre-install Hook (Standardized)
+# v1.2.5 · Traccar Pre-install Hook (Architecture Optimized)
 # ==============================================================================
 # 职责：
-# 1. 自动加载运行目录下的 .env 环境变量
-# 2. 自动对齐宿主机与容器网络的数据库连接地址
-# 3. 执行 Traccar 专属逻辑数据库与用户的初始化
+# 1. 加载运行时 .env 环境变量
+# 2. 通过 docker exec 直接进入数据库容器内部进行初始化
+# 3. 适配项目全局 proxy 架构，消除宿主机与容器间的网络隔离问题
 # ==============================================================================
 
-echo "[Hook] 正在执行 Traccar 预安装钩子..."
+echo "[Hook] 正在执行 Traccar 预安装钩子 (Docker Exec 模式)..."
 
 # ------------------------------------------------------------------------------
 # 1. 环境加载 (Environment Loading)
@@ -29,39 +29,27 @@ else
 fi
 
 # ------------------------------------------------------------------------------
-# 2. 数据库连接对齐 (Host Alignment)
+# 2. 容器状态检查 (Wait for MariaDB Container)
 # ------------------------------------------------------------------------------
-# 🌟 修复：宿主机 Shell 无法直接解析容器名 "mariadb"
-# 如果配置指向容器名，则在执行 Hook 时临时映射到 127.0.0.1
-DB_CONNECT_HOST="${MARIADB_HOST}"
+# 根据 .env 中的 MARIADB_HOST 确定容器名
+DB_CONTAINER="${MARIADB_HOST:-mariadb}"
 
-if [ "${DB_CONNECT_HOST}" == "mariadb" ] || [ "${DB_CONNECT_HOST}" == "mysql" ]; then
-    DB_CONNECT_HOST="127.0.0.1"
-fi
+echo "[Hook] 正在检查数据库容器 [$DB_CONTAINER] 的可用性..."
 
-# ------------------------------------------------------------------------------
-# 3. 数据库等待 (Wait for MariaDB)
-# ------------------------------------------------------------------------------
-echo "Waiting for MariaDB to be ready at ${DB_CONNECT_HOST}:${MARIADB_PORT}..."
-
-until mariadb \
-  -h "${DB_CONNECT_HOST}" \
-  -P "${MARIADB_PORT}" \
-  -u "${DB_ADMIN_USER}" \
-  -p"${DB_ADMIN_PASSWORD}" \
-  -e "SELECT 1" >/dev/null 2>&1; do
-  echo "  - MariaDB is not reachable at ${DB_CONNECT_HOST}, retrying in 2s..."
-  sleep 2
+# 确保目标容器正在运行
+until [ "$(docker inspect -f '{{.State.Running}}' "$DB_CONTAINER" 2>/dev/null)" == "true" ]; do
+    echo "  - 数据库容器 [$DB_CONTAINER] 尚未就绪，等待中..."
+    sleep 2
 done
 
 # ------------------------------------------------------------------------------
-# 4. 数据库初始化 (Database Initialization)
+# 3. 数据库初始化 (Execute via Docker Exec)
 # ------------------------------------------------------------------------------
-echo "Initializing Traccar database and user..."
+# 🌟 修复说明：不再通过 127.0.0.1 连接，直接注入 SQL 到容器内部执行
+# 这种方式不仅消除了网络不通的风险，还不需要宿主机安装 mariadb-client
+echo "[Hook] 正在通过容器内部通道初始化 Traccar 数据库..."
 
-mariadb \
-  -h "${DB_CONNECT_HOST}" \
-  -P "${MARIADB_PORT}" \
+docker exec -i "$DB_CONTAINER" mariadb \
   -u "${DB_ADMIN_USER}" \
   -p"${DB_ADMIN_PASSWORD}" <<SQL
 
