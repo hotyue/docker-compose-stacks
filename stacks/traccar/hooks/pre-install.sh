@@ -2,11 +2,12 @@
 set -euo pipefail
 
 # ==============================================================================
-# v1.2.0 · Traccar Pre-install Hook (Standardized)
+# v1.2.1 · Traccar Pre-install Hook (Standardized)
 # ==============================================================================
 # 职责：
 # 1. 自动加载运行目录下的 .env 环境变量
-# 2. 执行 Traccar 专属逻辑数据库与用户的初始化
+# 2. 自动对齐宿主机与容器网络的数据库连接地址
+# 3. 执行 Traccar 专属逻辑数据库与用户的初始化
 # ==============================================================================
 
 echo "[Hook] 正在执行 Traccar 预安装钩子..."
@@ -14,7 +15,6 @@ echo "[Hook] 正在执行 Traccar 预安装钩子..."
 # ------------------------------------------------------------------------------
 # 1. 环境加载 (Environment Loading)
 # ------------------------------------------------------------------------------
-# 优先使用 Installer 传递的 RUNTIME_DIR，否则回退到标准运行路径
 TARGET_ENV="${RUNTIME_DIR:-/opt/docker/traccar}/.env"
 
 if [ -f "$TARGET_ENV" ]; then
@@ -29,27 +29,38 @@ else
 fi
 
 # ------------------------------------------------------------------------------
-# 2. 数据库等待 (Wait for MariaDB)
+# 2. 数据库连接对齐 (Host Alignment)
 # ------------------------------------------------------------------------------
-echo "Waiting for MariaDB to be ready at ${MARIADB_HOST}:${MARIADB_PORT}..."
+# 🌟 修复：宿主机 Shell 无法直接解析容器名 "mariadb"
+# 如果配置指向容器名，则在执行 Hook 时临时映射到 127.0.0.1
+DB_CONNECT_HOST="${MARIADB_HOST}"
+
+if [ "${DB_CONNECT_HOST}" == "mariadb" ] || [ "${DB_CONNECT_HOST}" == "mysql" ]; then
+    DB_CONNECT_HOST="127.0.0.1"
+fi
+
+# ------------------------------------------------------------------------------
+# 3. 数据库等待 (Wait for MariaDB)
+# ------------------------------------------------------------------------------
+echo "Waiting for MariaDB to be ready at ${DB_CONNECT_HOST}:${MARIADB_PORT}..."
 
 until mariadb \
-  -h "${MARIADB_HOST}" \
+  -h "${DB_CONNECT_HOST}" \
   -P "${MARIADB_PORT}" \
   -u "${DB_ADMIN_USER}" \
   -p"${DB_ADMIN_PASSWORD}" \
   -e "SELECT 1" >/dev/null 2>&1; do
-  echo "  - MariaDB is not reachable, retrying in 2s..."
+  echo "  - MariaDB is not reachable at ${DB_CONNECT_HOST}, retrying in 2s..."
   sleep 2
 done
 
 # ------------------------------------------------------------------------------
-# 3. 数据库初始化 (Database Initialization)
+# 4. 数据库初始化 (Database Initialization)
 # ------------------------------------------------------------------------------
 echo "Initializing Traccar database and user..."
 
 mariadb \
-  -h "${MARIADB_HOST}" \
+  -h "${DB_CONNECT_HOST}" \
   -P "${MARIADB_PORT}" \
   -u "${DB_ADMIN_USER}" \
   -p"${DB_ADMIN_PASSWORD}" <<SQL
