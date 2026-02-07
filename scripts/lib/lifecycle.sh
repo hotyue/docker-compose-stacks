@@ -1,21 +1,22 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# v1.2.0 Lifecycle Definition
-# This file only DECLARES lifecycle structure.
-# No execution logic is included.
+# ==============================================================================
+# v1.3.0 · Lifecycle Infrastructure Definition
+# ==============================================================================
+# 本文件仅定义全局生命周期架构。
+# 具体 Stack 的任务已通过 hooks/ 机制实现自归位，不再在此硬编码。
+# ==============================================================================
 
-# -------------------------------
-# Global lifecycle phases
-# -------------------------------
-LIFECYCLE_PHASES=("prepare" "run")
+# ------------------------------------------------------------------------------
+# 全局生命周期阶段 (Global Lifecycle Phases)
+# ------------------------------------------------------------------------------
+# 目前系统支持的自动化钩子阶段：
+# - pre-install:  容器启动前的预处理 (如数据库建库、证书生成)
+# - post-install: 容器启动后的收尾操作 (暂留，供未来扩展)
+# ------------------------------------------------------------------------------
+LIFECYCLE_PHASES=("pre-install" "post-install")
 
-# -------------------------------
-# Traccar lifecycle declarations
-# -------------------------------
-
-# Tasks executed in prepare phase for traccar
-TASKS_prepare_traccar=(
-  "traccar.db.init:stacks/traccar/tasks/traccar-db-init.sh"
-)
-
+# 注意：
+# 具体的任务定义已从本文件移除。
+# 请在各 Stack 目录下创建 hooks/pre-install.sh 实现自定义逻辑。

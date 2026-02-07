@@ -2,13 +2,14 @@
 set -euo pipefail
 
 # ==============================================================================
-# Docker Compose Stacks Installer
+# Docker Compose Stacks Installer (v1.3.0)
 # ==============================================================================
 # 核心安装脚本，负责：
 # 1. 依赖环境检测
 # 2. Stack 资源同步（物理复制）
 # 3. 环境变量 (.env) 交互式生成
-# 4. 容器启动与初始化治理
+# 4. 通用生命周期钩子执行 (Lifecycle Hooks)
+# 5. 容器启动与智能清理
 # ==============================================================================
 
 # -------------------------
@@ -29,8 +30,6 @@ RUNTIME_ROOT="/opt/docker"
 # -------------------------
 # shellcheck disable=SC1090
 source "$REPO_ROOT/scripts/lib/runtime.sh"
-# 假设 lifecycle.sh 定义了 TASKS_prepare_traccar 等变量
-source "$REPO_ROOT/scripts/lib/lifecycle.sh" 
 
 # 检测 docker compose 命令 (docker compose vs docker-compose)
 detect_compose
@@ -94,46 +93,13 @@ mark_installed() {
 }
 
 # ==============================================================================
-# v1.2.0 特性：Traccar 预处理任务
-# ==============================================================================
-
-run_prepare_tasks_traccar() {
-  echo "[$(timestamp)] [prepare] traccar: 开始执行预处理任务..."
-
-  local task
-  # TASKS_prepare_traccar 应在 lifecycle.sh 中定义
-  for task in "${TASKS_prepare_traccar[@]}"; do
-    IFS=':' read -r task_id task_path <<<"$task"
-
-    echo "[$(timestamp)] [prepare] 执行任务: $task_id"
-
-    if [ ! -x "$REPO_ROOT/$task_path" ]; then
-      echo "[$(timestamp)] [prepare] 错误: 任务脚本不可执行 -> $task_path"
-      exit 1
-    fi
-
-    # shellcheck disable=SC1090
-    "$REPO_ROOT/$task_path" || {
-      echo "[$(timestamp)] [prepare] 失败: 任务 $task_id 执行出错"
-      exit 1
-    }
-  done
-
-  echo "[$(timestamp)] [prepare] traccar: 所有预处理任务已完成"
-}
-
-# ==============================================================================
 # 核心逻辑：资源同步 (Stack Asset Sync)
-# ==============================================================================
-# v1.2.3 变更：移除对 docker-compose.yml 的排除，改为物理复制
-# 原因：防止 /tmp 临时目录被系统清理后，软链接失效导致服务无法管理
 # ==============================================================================
 sync_stack_assets() {
   local src_dir="$1"
   local runtime_dir="$2"
 
   if command -v rsync >/dev/null 2>&1; then
-    # 使用 rsync 同步 (保留属性)
     rsync -a \
       --exclude 'stack.meta' \
       --exclude '.env.example' \
@@ -142,15 +108,14 @@ sync_stack_assets() {
       --exclude '.github' \
       --exclude '.DS_Store' \
       --exclude '.env' \
+      --exclude 'hooks' \
       "$src_dir/" "$runtime_dir/"
   else
-    # 降级方案：使用 cp (兼容无 rsync 环境)
     local item
     shopt -s dotglob nullglob
     for item in "$src_dir"/* "$src_dir"/.*; do
       case "$(basename "$item")" in
-        # 排除列表
-        "."|".."|"stack.meta"|".env.example"|".env"|".git"|".github"|".gitignore"|".DS_Store")
+        "."|".."|"stack.meta"|".env.example"|".env"|".git"|".github"|".gitignore"|".DS_Store"|"hooks")
           continue
           ;;
       esac
@@ -195,34 +160,24 @@ install_stack() {
   prepare_runtime_dir "$runtime_dir"
   ensure_network "${REQUIRES_NETWORK:-}"
 
-  # 2. 同步资源 (物理复制，含 docker-compose.yml)
+  # 2. 同步资源 (物理复制)
   sync_stack_assets "$dir" "$runtime_dir"
 
   # 3. 处理 .env 配置
   ENV_CREATED=false
-
-  # 3.1 如果目标不存在 .env，从 example 复制
   if [ -f "$dir/.env.example" ] && [ ! -f "$runtime_dir/.env" ]; then
     cp "$dir/.env.example" "$runtime_dir/.env"
     ENV_CREATED=true
     echo "[$(timestamp)] 已生成运行目录 .env（来自 .env.example）"
   fi
 
-  # 3.2 校验 .env 必填项
   if [ -f "$dir/.env.example" ] && [ -f "$runtime_dir/.env" ]; then
-    required_keys=$(
-      grep -Ev '^\s*#|^\s*$' "$dir/.env.example" |
-      grep '=' |
-      grep -v '=$' |
-      cut -d= -f1
-    )
-
+    required_keys=$(grep -Ev '^\s*#|^\s*$' "$dir/.env.example" | grep '=' | grep -v '=$' | cut -d= -f1)
     for key in $required_keys; do
       if ! grep -q "^$key=" "$runtime_dir/.env"; then
         echo "[$(timestamp)] ERROR: 缺少必填配置项 '$key'（.env）"
         exit 1
       fi
-
       value=$(grep "^$key=" "$runtime_dir/.env" | cut -d= -f2-)
       if [ -z "$value" ]; then
         echo "[$(timestamp)] ERROR: 必填配置项 '$key' 为空（.env）"
@@ -231,54 +186,39 @@ install_stack() {
     done
   fi
 
-  # 4. 首次生成配置时的中断保护 (Pending 机制)
+  # 4. 中断保护
   if [ "$ENV_CREATED" = true ]; then
     {
       echo "STACK_DIR=$dir"
       echo "RUNTIME_DIR=$runtime_dir"
     } > "$PENDING_FILE"
-
     echo "--------------------------------------------------"
-    echo "已生成配置文件："
-    echo "  $runtime_dir/.env"
-    echo
-    echo "在继续安装前，你需要手动修改该文件中的配置项。"
-    echo
+    echo "已生成配置文件： $runtime_dir/.env"
     echo "修改完成后，重新运行 installer 将继续安装。"
     echo "--------------------------------------------------"
-    echo "[$(timestamp)] 首次生成 .env，安装已暂停。"
     exit 0
   fi
 
-  # 5. 特定 Stack 的预处理钩子 (Traccar v1.2.0)
-  if [ "$(basename "$dir")" = "traccar" ]; then
-    echo "[$(timestamp)] 触发 v1.2.0 Traccar 预处理..."
-    run_prepare_tasks_traccar
+  # 5. 通用预处理钩子 (Generic Pre-install Hook)
+  local hook_script="$dir/hooks/pre-install.sh"
+  if [ -f "$hook_script" ] && [ -x "$hook_script" ]; then
+    echo "[$(timestamp)] 检测到预处理钩子，正在执行..."
+    export RUNTIME_DIR="$runtime_dir"
+    export STACK_DIR="$dir"
+    "$hook_script" || { echo "[$(timestamp)] ERROR: 钩子执行失败！"; exit 1; }
   fi
 
   # 6. 启动服务与智能清理
   echo "[$(timestamp)] 启动服务中..."
   (
     cd "$runtime_dir"
-    
-    # ⚠️ v1.2.3 变更：删除软链接命令 (ln -sf)，文件已在 sync_stack_assets 中物理复制
-    # ln -sf "$dir/docker-compose.yml" docker-compose.yml  <-- 已移除
-    
     $COMPOSE_CMD up -d
-
-    # === 智能清理逻辑 (Smart Cleanup) ===
-    # 仅清理成功完成 (Exit 0) 的初始化容器，保留失败容器供调试
     echo "[$(timestamp)] 检查并清理初始化容器..."
-    sleep 3 # 等待容器状态更新
-    
-    # 获取当前 Stack 下所有已停止的容器 ID
+    sleep 3
     stopped_containers=$($COMPOSE_CMD ps -a --filter "status=exited" -q)
-    
     if [ -n "$stopped_containers" ]; then
       for container_id in $stopped_containers; do
-        # 检查退出代码
         exit_code=$(docker inspect "$container_id" --format='{{.State.ExitCode}}')
-        
         if [ "$exit_code" == "0" ]; then
            echo "  - 清理成功完成的任务容器: $container_id"
            docker rm "$container_id" >/dev/null
@@ -296,16 +236,23 @@ install_stack() {
 }
 
 # ==============================================================================
-# 独立命令支持：prepare
+# 独立命令支持：prepare <stack_name>
 # ==============================================================================
 if [ "${1:-}" = "prepare" ]; then
-  stack="${2:-}"
-  if [ "$stack" != "traccar" ]; then
-    echo "[$(timestamp)] prepare 命令目前仅支持: traccar (v1.2.0)"
+  stack_name="${2:-}"
+  [ -z "$stack_name" ] && { echo "用法: $0 prepare <stack_name>"; exit 1; }
+  
+  target_stack="$REPO_ROOT/stacks/$stack_name"
+  hook="$target_stack/hooks/pre-install.sh"
+  
+  if [ -x "$hook" ]; then
+    export RUNTIME_DIR="$(runtime_dir_for_stack "$target_stack")"
+    export STACK_DIR="$target_stack"
+    "$hook"
+  else
+    echo "未找到该 Stack 的预处理钩子: $hook"
     exit 1
   fi
-
-  run_prepare_tasks_traccar
   exit 0
 fi
 
@@ -316,82 +263,44 @@ main() {
   need_cmd docker
   need_cmd find
 
-  # 1. 恢复未完成的安装
   if [ -f "$PENDING_FILE" ]; then
     echo "[$(timestamp)] 检测到未完成的安装，正在恢复..."
     # shellcheck disable=SC1090
     source "$PENDING_FILE"
-
-    if [ -z "${STACK_DIR:-}" ]; then
-      echo "[$(timestamp)] ERROR: pending 状态损坏，请手动清理。"
-      exit 1
-    fi
-
     install_stack "$STACK_DIR"
     exit 0
   fi
 
-  # 2. 扫描 Stacks
   declare -a METAS=()
   mapfile -t METAS < <(find "$REPO_ROOT/stacks" -type f -name stack.meta 2>/dev/null | sort)
-  if [ "${#METAS[@]}" -eq 0 ]; then
-    echo "[$(timestamp)] 未找到任何 stack.meta"
-    exit 1
-  fi
-
+  
   declare -a MENU_DIRS=()
   declare -a MENU_LINES=()
 
-  local dir NAME CATEGORY DESCRIPTION REQUIRES_NETWORK
-
-  # 3. 构建菜单
   for meta in "${METAS[@]}"; do
     dir="$(dirname "$meta")"
     NAME=""; CATEGORY=""; DESCRIPTION=""; REQUIRES_NETWORK=""
-
-    # shellcheck disable=SC1090
     source "$meta"
-
     [ -z "$NAME" ] && continue
-    [ -z "$CATEGORY" ] && continue
-    [ -z "$DESCRIPTION" ] && continue
-
-    local extra=""
+    extra=""
     [ -n "${REQUIRES_NETWORK:-}" ] && extra="needs:${REQUIRES_NETWORK}"
     is_installed "$dir" && extra="$extra 已安装"
-
     MENU_DIRS+=("$dir")
     MENU_LINES+=("[$CATEGORY] $NAME - $DESCRIPTION ${extra:+($extra)}")
   done
 
-  # 4. 显示菜单交互
   echo
-  echo "可安装应用栈："
-  for i in "${!MENU_LINES[@]}"; do
-    printf "%3d) %s\n" "$((i+1))" "${MENU_LINES[$i]}"
-  done
+  for i in "${!MENU_LINES[@]}"; do printf "%3d) %s\n" "$((i+1))" "${MENU_LINES[$i]}"; done
   echo "  0) 退出"
   echo
-
   read -r -p "请输入编号： " choice
-  if [ "$choice" = "0" ]; then
-    echo "[$(timestamp)] 已退出。"
-    exit 0
-  fi
-
+  [ "$choice" = "0" ] && exit 0
+  
   if ! [[ "$choice" =~ ^[0-9]+$ ]] || [ "$choice" -lt 1 ] || [ "$choice" -gt "${#MENU_DIRS[@]}" ]; then
-    echo "[$(timestamp)] 无效选择：$choice"
-    exit 1
+    echo "无效选择"; exit 1
   fi
 
-  local target="${MENU_DIRS[$((choice-1))]}"
-  if is_installed "$target"; then
-    echo "[$(timestamp)] 该应用已安装，如需重装请先手动清理。"
-    exit 0
-  fi
-
-  # 5. 执行安装
-  install_stack "$target"
+  install_stack "${MENU_DIRS[$((choice-1))]}"
 }
 
 main "$@"
