@@ -3,12 +3,12 @@ version: "3.8"
 services:
 
   # ============================================================================
-  # Vaultwarden 主服务 (v1.3.3 终极避坑治理版)
+  # Vaultwarden 主服务 (v1.3.4 终极对齐版)
   # ============================================================================
   # 变更说明：
-  # 1. 核心修复：放弃不稳定的 DATABASE_URL 拼接，改用分立变量 (DATABASE_METHOD, DB_PW 等)。
-  # 2. 彻底规避：特殊字符（如 $9, #, @）在 URL 解析中导致的 Access Denied 报错。
-  # 3. 架构优化：维持 Pre-install Hook 机制，确保数据库初始化与主服务完全解耦。
+  # 1. 强制对齐：使用 DATABASE_URL 确保 Vaultwarden 优先识别外部 MariaDB。
+  # 2. 避坑指南：不使用分立变量，因为部分镜像版本会因找不到 DATABASE_URL 而回退 SQLite。
+  # 3. 环境变量：使用 Docker 原生插值，确保 $9 等符号不被宿主机 Shell 预解析。
   # ============================================================================
   vaultwarden:
     image: ${VAULTWARDEN_IMAGE}
@@ -25,17 +25,12 @@ services:
       # ===== 外部访问域名 =====
       DOMAIN: ${VAULTWARDEN_DOMAIN}
 
-      # ===== 数据库连接 (针对复杂密码的终极修复) =====
-      # 🌟 不再拼接 URL，直接通过底层参数注入，确保密码原始性
-      DATABASE_METHOD: mysql
-      DB_TYPE: mysql
-      DB_HOST: ${VAULTWARDEN_DB_HOST}
-      DB_PORT: ${VAULTWARDEN_DB_PORT}
-      DB_NAME: ${VAULTWARDEN_DB_NAME}
-      DB_USER: ${VAULTWARDEN_DB_USER}
-      DB_PW: ${VAULTWARDEN_DB_PASSWORD}
+      # ===== 数据库连接 (针对 SQLite 退化的强制修复) =====
+      # 🌟 必须提供 DATABASE_URL 且协议头必须为 mysql:// 才能禁用内置 SQLite
+      # 注意：如果密码包含 [# ? @ : /] 等 URL 关键字，请务必在 .env 中进行 URL 编码
+      DATABASE_URL: mysql://${VAULTWARDEN_DB_USER}:${VAULTWARDEN_DB_PASSWORD}@${VAULTWARDEN_DB_HOST}:${VAULTWARDEN_DB_PORT}/${VAULTWARDEN_DB_NAME}
       
-      # 连接池调优
+      # 辅助连接参数
       DATABASE_MAX_CONNS: 10
       DB_CONNECTION_RETRIES: 15
 
