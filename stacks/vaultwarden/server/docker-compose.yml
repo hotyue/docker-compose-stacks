@@ -1,35 +1,6 @@
 version: "3.8"
 
 services:
-  # ==============================
-  # Vaultwarden 数据库初始化（一次性）
-  # ==============================
-  vaultwarden-db-init:
-    image: mariadb:11
-    container_name: vaultwarden-db-init
-    restart: "no"
-    command: ["bash", "/init/10-init-vaultwarden-db.sh"]
-    environment:
-      TZ: ${TZ}
-
-      # MariaDB 连接信息（平台级）
-      VAULTWARDEN_DB_HOST: ${VAULTWARDEN_DB_HOST}
-      VAULTWARDEN_DB_PORT: ${VAULTWARDEN_DB_PORT}
-
-      # Vaultwarden 逻辑数据库
-      VAULTWARDEN_DB_NAME: ${VAULTWARDEN_DB_NAME}
-      VAULTWARDEN_DB_USER: ${VAULTWARDEN_DB_USER}
-      VAULTWARDEN_DB_PASSWORD: ${VAULTWARDEN_DB_PASSWORD}
-
-      # 初始化阶段专用管理账号（仅 init 容器使用）
-      VAULTWARDEN_DB_ADMIN_USER: ${VAULTWARDEN_DB_ADMIN_USER}
-      VAULTWARDEN_DB_ADMIN_PASSWORD: ${VAULTWARDEN_DB_ADMIN_PASSWORD}
-
-    volumes:
-      - ./init:/init:ro
-    networks:
-      - proxy
-
 
   # ==============================
   # Vaultwarden 主服务
@@ -38,8 +9,6 @@ services:
     image: ${VAULTWARDEN_IMAGE}
     container_name: ${VAULTWARDEN_CONTAINER_NAME}
     restart: unless-stopped
-    depends_on:
-      - vaultwarden-db-init
 
     # 可选：宿主机直连调试端口
     # NPM 反代不依赖该映射，直接走 proxy 网络访问容器 80 端口
