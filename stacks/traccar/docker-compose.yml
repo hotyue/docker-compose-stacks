@@ -17,8 +17,12 @@ services:
       - "8048:8082"
 
       # 设备上报端口（必须暴露）
-      - "${TRACCAR_DEVICE_PORT_RANGE:-5000-5300}:5000-5300"
-      - "${TRACCAR_DEVICE_PORT_RANGE:-5000-5300}:5000-5300/udp"
+#      - "${TRACCAR_DEVICE_PORT_RANGE:-5000-5300}:5000-5300"
+#      - "${TRACCAR_DEVICE_PORT_RANGE:-5000-5300}:5000-5300/udp"
+
+      # 设备接入 (Osmand 协议)
+      - "${TRACCAR_DEVICE_PORT:-5055}:5055"
+      - "${TRACCAR_DEVICE_PORT:-5055}:5055/udp"
 
     # ------------------------------------------------------------
     # 持久化

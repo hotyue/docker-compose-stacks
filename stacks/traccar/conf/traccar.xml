@@ -3,16 +3,13 @@
 
 <properties>
 
-  <!--
-    引用官方默认配置
-    保证升级兼容性
-  -->
   <entry key="config.default">./conf/default.xml</entry>
 
-  <!--
-    Web 管理界面端口
-    实际绑定与暴露由 docker-compose.yml 控制
-  -->
   <entry key="web.port">8082</entry>
 
-</properties>
+  <entry key="server.port">5055</entry>
+  <entry key="server.protocol">osmand</entry>
+
+  <entry key="status.timeout">3610</entry>
+
+  </properties>
