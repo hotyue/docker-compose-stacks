@@ -196,7 +196,6 @@ Installer 通过该文件实现 零硬编码发现与调度。
 │   │   ├── server/
 │   │   └── agent/
 │   ├── vaultwarden/          # Vaultwarden（Bitwarden 兼容服务端）
-│   │   └── server/
 │   ├── matomo/               # WEB访问统计面板
 │   ├── mariadb/              # 数据库
 │   ├── phpMyAdmin/           # 数据库管理工具
