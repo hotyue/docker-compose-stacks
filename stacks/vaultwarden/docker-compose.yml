@@ -1,39 +1,74 @@
 version: "3.8"
 
 services:
+  # ==============================
+  # Vaultwarden 数据库初始化（一次性）
+  # ==============================
+  vaultwarden-db-init:
+    image: mariadb:11
+    container_name: vaultwarden-db-init
+    restart: "no"
+    command: ["bash", "/init/10-init-vaultwarden-db.sh"]
+    environment:
+      TZ: ${TZ}
 
-  # ============================================================================
-  # Vaultwarden 主服务 (v1.3.6 终极生产版)
-  # ============================================================================
+      # MariaDB 连接信息（平台级）
+      VAULTWARDEN_DB_HOST: ${VAULTWARDEN_DB_HOST}
+      VAULTWARDEN_DB_PORT: ${VAULTWARDEN_DB_PORT}
+
+      # Vaultwarden 逻辑数据库
+      VAULTWARDEN_DB_NAME: ${VAULTWARDEN_DB_NAME}
+      VAULTWARDEN_DB_USER: ${VAULTWARDEN_DB_USER}
+      VAULTWARDEN_DB_PASSWORD: ${VAULTWARDEN_DB_PASSWORD}
+
+      # 初始化阶段专用管理账号（仅 init 容器使用）
+      VAULTWARDEN_DB_ADMIN_USER: ${VAULTWARDEN_DB_ADMIN_USER}
+      VAULTWARDEN_DB_ADMIN_PASSWORD: ${VAULTWARDEN_DB_ADMIN_PASSWORD}
+
+    volumes:
+      - ./init:/init:ro
+    networks:
+      - proxy
+
+
+  # ==============================
+  # Vaultwarden 主服务
+  # ==============================
   vaultwarden:
     image: ${VAULTWARDEN_IMAGE}
     container_name: ${VAULTWARDEN_CONTAINER_NAME}
     restart: unless-stopped
+    depends_on:
+      - vaultwarden-db-init
 
+    # 可选：宿主机直连调试端口
+    # NPM 反代不依赖该映射，直接走 proxy 网络访问容器 80 端口
     ports:
       - "${VAULTWARDEN_HTTP_PORT}:80"
 
     environment:
       TZ: ${TZ}
+
+      # ===== 外部访问域名（必须与实际 HTTPS 访问地址完全一致）=====
       DOMAIN: ${VAULTWARDEN_DOMAIN}
 
-      # ===== 数据库连接 (强制禁用 SQLite) =====
-      # 1. 必须提供协议头 mysql:// 
-      # 2. 这里的变量插值由 Docker 负责，能有效保护包含 $9 的强密码
-      DATABASE_URL: mysql://${VAULTWARDEN_DB_USER}:${VAULTWARDEN_DB_PASSWORD}@${VAULTWARDEN_DB_HOST}:${VAULTWARDEN_DB_PORT}/${VAULTWARDEN_DB_NAME}
-      
-      # 3. 注入分立变量作为双重保险
-      DB_TYPE: mysql
-      DB_HOST: ${VAULTWARDEN_DB_HOST}
-      DB_PORT: ${VAULTWARDEN_DB_PORT}
-      DB_NAME: ${VAULTWARDEN_DB_NAME}
-      DB_USER: ${VAULTWARDEN_DB_USER}
-      DB_PW: ${VAULTWARDEN_DB_PASSWORD}
+      # ===== 数据库连接（运行期仅使用专用用户）=====
+      DATABASE_URL: "mysql://${VAULTWARDEN_DB_USER}:${VAULTWARDEN_DB_PASSWORD}@${VAULTWARDEN_DB_HOST}:${VAULTWARDEN_DB_PORT}/${VAULTWARDEN_DB_NAME}"
+
+      # ===== WebSocket（通知通道）=====
+      # 官方默认启用，不设置 WEBSOCKET_ENABLED
+      # 需要 Nginx Proxy Manager 启用 WebSocket Support
+
+      # ===== 可选治理项（按需启用）=====
+      # SIGNUPS_ALLOWED: "false"
+      # INVITATIONS_ALLOWED: "true"
+      # ADMIN_TOKEN: ${VAULTWARDEN_ADMIN_TOKEN}
 
     volumes:
       - ./data:/data
     networks:
       - proxy
+
 
 networks:
   proxy:
