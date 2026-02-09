@@ -6,24 +6,23 @@ services:
     container_name: nezha-dashboard
     restart: unless-stopped
     
-    # 端口映射
-    # V1 版本 Agent 可通过 HTTP 端口 (WebSocket) 连接，无需独立 gRPC 端口
     ports:
       - "${NEZHA_HTTP_PORT:-8008}:8008"
 
-    # 数据持久化
     volumes:
       - ./data:/dashboard/data
 
     environment:
       TZ: ${TZ}
-      # 关闭调试
       DEBUG: "false"
-
-      # 🇨🇳 设置默认语言为中文
+      
+      # 🇨🇳 语言设置
       NZ_LANGUAGE: zh-CN
       
-      # OAuth 登录配置 (可选)
+      # 🏷️ 站点名称 (映射我们定义的变量)
+      NZ_SITE_NAME: ${NEZHA_SITE_NAME:-Nezha Monitoring}
+      
+      # OAuth 配置
       GH_CLIENT_ID: ${NEZHA_OAUTH_CLIENT_ID}
       GH_CLIENT_SECRET: ${NEZHA_OAUTH_CLIENT_SECRET}
 
