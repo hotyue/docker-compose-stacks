@@ -10,8 +10,11 @@ services:
     restart: "no"
     # 确保挂载路径与脚本内一致
     command: ["bash", "/init/10-init-nezha-db.sh"]
-    depends_on:
-      - mariadb
+    
+    # ❌ 删除 depends_on，因为 mariadb 是外部容器
+    # depends_on:
+    #   - mariadb
+
     environment:
       TZ: ${TZ}
       # ----- 传递变量给脚本用于生成 config.yaml -----
@@ -58,9 +61,6 @@ services:
       DEBUG: "false"
       
       # ----- OAuth 变量映射 (可选) -----
-      # 如果你在 .env 中配置了 OAuth，这里直接映射给容器
-      # 这样可以免去手动修改 config.yaml 的麻烦
-      # 默认映射为 GitHub，如需 Gitee 请改为 GITEE_CLIENT_ID
       GH_CLIENT_ID: ${NEZHA_OAUTH_CLIENT_ID}
       GH_CLIENT_SECRET: ${NEZHA_OAUTH_CLIENT_SECRET}
 
