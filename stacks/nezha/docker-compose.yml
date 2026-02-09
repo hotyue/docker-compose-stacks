@@ -1,29 +1,26 @@
 version: "3.8"
 
 services:
-  # ==============================
-  # Nezha Dashboard (内置 SQLite 版)
-  # ==============================
   nezha:
     image: ghcr.io/nezhahq/nezha:latest
     container_name: nezha-dashboard
     restart: unless-stopped
     
     # 端口映射
+    # V1 版本 Agent 可通过 HTTP 端口 (WebSocket) 连接，无需独立 gRPC 端口
     ports:
-      - "${NEZHA_HTTP_PORT}:8008"
-      - "${NEZHA_GRPC_PORT}:5555"
+      - "${NEZHA_HTTP_PORT:-8008}:8008"
 
-    # 数据持久化 (SQLite 文件会自动生成在 ./data 下)
+    # 数据持久化
     volumes:
       - ./data:/dashboard/data
 
     environment:
       TZ: ${TZ}
-      # 调试关闭
+      # 关闭调试
       DEBUG: "false"
       
-      # OAuth 变量映射 (可选，方便直接在 .env 配置登录)
+      # OAuth 登录配置 (可选)
       GH_CLIENT_ID: ${NEZHA_OAUTH_CLIENT_ID}
       GH_CLIENT_SECRET: ${NEZHA_OAUTH_CLIENT_SECRET}
 
