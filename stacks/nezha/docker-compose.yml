@@ -19,6 +19,9 @@ services:
       TZ: ${TZ}
       # 关闭调试
       DEBUG: "false"
+
+      # 🇨🇳 设置默认语言为中文
+      NZ_LANGUAGE: zh-CN
       
       # OAuth 登录配置 (可选)
       GH_CLIENT_ID: ${NEZHA_OAUTH_CLIENT_ID}
