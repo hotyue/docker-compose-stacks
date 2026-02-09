@@ -14,17 +14,42 @@ services:
 
     environment:
       TZ: ${TZ}
-      DEBUG: "false"
+      # 传入变量供 Entrypoint 初始化脚本使用
+      INIT_SITE_NAME: ${NEZHA_SITE_NAME:-Nezha Monitoring}
+      INIT_HTTP_PORT: 8008
       
-      # 🇨🇳 语言设置
-      NZ_LANGUAGE: zh-CN
-      
-      # 🏷️ 站点名称 (映射我们定义的变量)
-      NZ_SITE_NAME: ${NEZHA_SITE_NAME:-Nezha Monitoring}
-      
-      # OAuth 配置
+      # OAuth 变量 (主程序读取)
       GH_CLIENT_ID: ${NEZHA_OAUTH_CLIENT_ID}
       GH_CLIENT_SECRET: ${NEZHA_OAUTH_CLIENT_SECRET}
+
+    # 🚀 核心优化：Entrypoint 注入初始化逻辑
+    # 在主程序启动前，检测并生成包含中文和自定义名称的配置文件
+    entrypoint: 
+      - /bin/sh
+      - -c
+      - |
+        # 1. 定义配置文件路径
+        CONFIG_FILE="/dashboard/data/config.yaml"
+        
+        # 2. 如果配置文件不存在（全新部署），则自动生成
+        if [ ! -f "$$CONFIG_FILE" ]; then
+          echo "[Entrypoint] 检测到全新部署，正在生成配置文件..."
+          echo "[Entrypoint] 语言: zh-CN, 站点: $$INIT_SITE_NAME"
+          
+          # 写入 YAML 配置 (SQLite + 中文 + 自定义名称)
+          cat <<EOF > "$$CONFIG_FILE"
+        debug: false
+        httpport: $$INIT_HTTP_PORT
+        language: zh-CN
+        site_name: "$$INIT_SITE_NAME"
+        type: sqlite3
+        EOF
+        else
+          echo "[Entrypoint] 配置文件已存在，跳过初始化。"
+        fi
+        
+        # 3. 启动哪吒主程序
+        exec /dashboard/nezha-dashboard
 
     networks:
       - proxy
