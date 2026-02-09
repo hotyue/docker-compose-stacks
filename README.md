@@ -68,7 +68,7 @@ bash bootstrap.sh
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/hotyue/docker-compose-stacks/main/scripts/bootstrap.sh -o bootstrap.sh
-DCS_REF=v1.4.0 bash bootstrap.sh
+DCS_REF=v1.4.1 bash bootstrap.sh
 
 ```
 先下载再查看（更安全）：
@@ -119,8 +119,8 @@ Installer 将会：
 
 - **Matomo**  
   开源的自托管 Web 分析平台，用于替代 Google Analytics
-- **哪吒监控（Server）**  
-  哪吒监控面板与 API 服务端
+- **哪吒监控**  
+  哪吒监控面板与 API 服务端（内置 SQLite 数据库，轻量版）
 
 ### 数据库
 
@@ -191,8 +191,6 @@ Installer 通过该文件实现 零硬编码发现与调度。
 ├── stacks/                   # 应用栈集合
 │   ├── nginx-proxy-manager/  # NPM反代面板
 │   ├── nezha/                # nezha VPS监控面板
-│   │   ├── server/
-│   │   └── agent/
 │   ├── vaultwarden/          # Vaultwarden（Bitwarden 兼容服务端）
 │   ├── matomo/               # WEB访问统计面板
 │   ├── mariadb/              # 数据库

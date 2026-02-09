@@ -2,65 +2,28 @@ version: "3.8"
 
 services:
   # ==============================
-  # 1. 初始化容器 (建库 + 写配置)
-  # ==============================
-  nezha-db-init:
-    image: mariadb:11
-    container_name: nezha-db-init
-    restart: "no"
-    # 确保挂载路径与脚本内一致
-    command: ["bash", "/init/10-init-nezha-db.sh"]
-    
-    # ❌ 删除 depends_on，因为 mariadb 是外部容器
-    # depends_on:
-    #   - mariadb
-
-    environment:
-      TZ: ${TZ}
-      # ----- 传递变量给脚本用于生成 config.yaml -----
-      NEZHA_HTTP_PORT: ${NEZHA_HTTP_PORT}
-      NEZHA_GRPC_PORT: ${NEZHA_GRPC_PORT}
-      
-      # ----- 传递业务库信息 -----
-      NEZHA_DB_HOST: ${NEZHA_DB_HOST}
-      NEZHA_DB_PORT: ${NEZHA_DB_PORT}
-      NEZHA_DB_NAME: ${NEZHA_DB_NAME}
-      NEZHA_DB_USER: ${NEZHA_DB_USER}
-      NEZHA_DB_PASSWORD: ${NEZHA_DB_PASSWORD}
-      
-      # ----- 传递管理员信息 (用于建库授权) -----
-      NEZHA_DB_ADMIN_USER: ${NEZHA_DB_ADMIN_USER}
-      NEZHA_DB_ADMIN_PASSWORD: ${NEZHA_DB_ADMIN_PASSWORD}
-    volumes:
-      - ./init:/init:ro
-      - ./data:/dashboard/data  # 必须挂载，用于输出 config.yaml
-    networks:
-      - proxy
-
-  # ==============================
-  # 2. Nezha 主服务
+  # Nezha Dashboard (内置 SQLite 版)
   # ==============================
   nezha:
     image: ghcr.io/nezhahq/nezha:latest
     container_name: nezha-dashboard
     restart: unless-stopped
-    depends_on:
-      nezha-db-init:
-        condition: service_completed_successfully
-
+    
+    # 端口映射
     ports:
       - "${NEZHA_HTTP_PORT}:8008"
       - "${NEZHA_GRPC_PORT}:5555"
 
+    # 数据持久化 (SQLite 文件会自动生成在 ./data 下)
     volumes:
-      - ./data:/dashboard/data  # 读取 init 容器生成的配置
-    
+      - ./data:/dashboard/data
+
     environment:
       TZ: ${TZ}
-      # 调试模式
+      # 调试关闭
       DEBUG: "false"
       
-      # ----- OAuth 变量映射 (可选) -----
+      # OAuth 变量映射 (可选，方便直接在 .env 配置登录)
       GH_CLIENT_ID: ${NEZHA_OAUTH_CLIENT_ID}
       GH_CLIENT_SECRET: ${NEZHA_OAUTH_CLIENT_SECRET}
 
