@@ -119,8 +119,6 @@ Installer 将会：
 
 - **Matomo**  
   开源的自托管 Web 分析平台，用于替代 Google Analytics
-- **哪吒监控（Agent）**  
-  哪吒监控客户端，用于被监控节点
 - **哪吒监控（Server）**  
   哪吒监控面板与 API 服务端
 
